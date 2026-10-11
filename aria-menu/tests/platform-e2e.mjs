@@ -189,7 +189,6 @@ try {
     const beforeCategories = (await page.locator('#category-list .row').count());
     await page.fill('#category-form input[name=name]', 'دسرهای ویژه');
     await page.selectOption('#category-form select[name=icon]', 'cake');
-    await page.fill('#category-form input[name=position]', '50');
     await page.click('#category-form button[type=submit]');
     await page.waitForFunction(n => document.querySelectorAll('#category-list .row').length === n + 1, beforeCategories);
     check('category can be created', true);

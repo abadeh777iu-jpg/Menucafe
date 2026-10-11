@@ -41,6 +41,15 @@
   </section>
 
   <div id="dashboard" hidden>
+    <nav class="section-nav" aria-label="بخش‌های پنل">
+      <a href="#profile-panel">اطلاعات</a>
+      <a href="#theme-panel">تم منو</a>
+      <a href="#schedule-panel">برنامهٔ تم</a>
+      <a href="#category-panel">دسته‌بندی‌ها</a>
+      <a href="#item-panel">غذاها</a>
+      <a href="#account-panel">حساب کاربری</a>
+    </nav>
+
     <section class="panel" id="profile-panel">
       <h2>اطلاعات رستوران</h2>
       <form id="profile-form" class="grid-form">
@@ -61,24 +70,54 @@
 
     <section class="panel" id="theme-panel">
       <h2>تم منو</h2>
-      <p class="muted">تم انتخابی برای همهٔ بازدیدکنندگان منوی این رستوران نمایش داده می‌شود.</p>
-      <div id="theme-list" class="theme-grid" role="radiogroup" aria-label="تم منو"></div>
-      <p class="form-msg" data-msg role="status"></p>
+      <div id="theme-status" class="status-card" role="status"></div>
+      <p class="muted">انتخاب یک تم در این فهرست، تم دستی است و بالاترین اولویت را دارد. برای بازگشت به برنامهٔ خودکار، تم دستی را حذف کنید.</p>
+      <div id="theme-list" class="theme-grid" role="radiogroup" aria-label="تم دستی منو"></div>
+      <div class="actions">
+        <button id="theme-clear" class="btn ghost" type="button" hidden>حذف تم دستی و بازگشت به برنامه</button>
+      </div>
+      <form id="default-theme-form" class="grid-form">
+        <label class="wide">تم پیش‌فرض رستوران (وقتی هیچ برنامه‌ای فعال نیست)
+          <select name="theme" required></select>
+        </label>
+        <div class="wide actions">
+          <button class="btn primary" type="submit">ذخیرهٔ تم پیش‌فرض</button>
+        </div>
+        <p class="form-msg wide" data-msg role="status"></p>
+      </form>
+      <section id="preview-panel" class="preview-panel" hidden aria-label="پیش‌نمایش تم">
+        <div class="preview-head">
+          <strong id="preview-title">پیش‌نمایش</strong>
+          <button id="preview-close" class="btn small ghost" type="button">بستن پیش‌نمایش</button>
+        </div>
+        <p class="muted">این پیش‌نمایش فقط برای شماست و تم رستوران را تغییر نمی‌دهد.</p>
+        <iframe id="preview-frame" class="preview-frame" title="پیش‌نمایش منوی عمومی"></iframe>
+      </section>
+    </section>
+
+    <section class="panel" id="schedule-panel">
+      <h2>برنامهٔ خودکار تم</h2>
+      <p class="muted" id="schedule-note"></p>
+      <div id="schedule-list" class="list"></div>
     </section>
 
     <section class="panel" id="category-panel">
       <h2>دسته‌بندی‌ها</h2>
+      <p class="muted">دسته‌بندی غیرفعال در منوی عمومی دیده نمی‌شود. غذاهای آن حذف نمی‌شوند.</p>
       <div id="category-list" class="list"></div>
       <form id="category-form" class="grid-form">
         <input type="hidden" name="id">
+        <div class="wide suggestions">
+          <span class="muted">پیشنهادها (اختیاری):</span>
+          <div id="category-suggestions" class="chips"></div>
+        </div>
         <label>نام دسته‌بندی <input name="name" required maxlength="40"></label>
-        <label>آیکن
-          <select name="icon" required></select>
-        </label>
-        <label>ترتیب نمایش <input name="position" type="number" min="0" max="9999" step="1" required></label>
+        <label>آیکن <select name="icon" required></select></label>
+        <label class="check wide"><input name="enabled" type="checkbox" checked> دسته‌بندی در منوی عمومی نمایش داده شود</label>
         <div class="wide actions">
-          <button class="btn primary" type="submit">ذخیره</button>
+          <button class="btn primary" type="submit">ذخیرهٔ دسته‌بندی</button>
           <button class="btn ghost" type="button" data-reset="category">دسته جدید</button>
+          <button class="btn danger" type="button" id="category-delete" hidden>حذف دسته</button>
         </div>
         <p class="form-msg wide" data-msg role="status"></p>
       </form>
@@ -99,18 +138,40 @@
         <input type="hidden" name="id">
         <label>نام غذا <input name="name" required maxlength="80"></label>
         <label>دسته‌بندی <select name="category" required></select></label>
-        <label>قیمت (تومان) <input name="price" type="number" min="0" max="1000000000" step="1000" required dir="ltr"></label>
+        <label>قیمت (تومان)
+          <input name="price" type="text" inputmode="numeric" required maxlength="16" dir="ltr" placeholder="مثلاً ۱۴۵٬۰۰۰">
+        </label>
         <label>آیکن <select name="icon" required></select></label>
         <label>برچسب (اختیاری) <input name="label" maxlength="30"></label>
         <label>ترتیب نمایش <input name="position" type="number" min="0" max="99999" step="1" required></label>
         <label class="wide">حساسیت‌زاها (با «،» جدا کنید) <input name="allergens" maxlength="600"></label>
-        <label class="wide">توضیحات <textarea name="description" rows="2" maxlength="400"></textarea></label>
+        <label class="wide">توضیح کوتاه <textarea name="description" rows="2" maxlength="400"></textarea></label>
         <label class="wide">ترکیبات <textarea name="ingredients" rows="2" maxlength="400"></textarea></label>
         <label class="check wide"><input name="visible" type="checkbox" checked> نمایش در منوی عمومی</label>
         <div class="wide actions">
-          <button class="btn primary" type="submit">ذخیره</button>
+          <button class="btn primary" type="submit">ذخیرهٔ غذا</button>
           <button class="btn ghost" type="button" id="item-cancel">انصراف</button>
           <button class="btn danger" type="button" id="item-delete" hidden>حذف غذا</button>
+        </div>
+        <p class="form-msg wide" data-msg role="status"></p>
+      </form>
+    </section>
+
+    <section class="panel" id="account-panel">
+      <h2>حساب کاربری</h2>
+      <p class="muted">حساب شما فقط به این رستوران دسترسی دارد. ساخت حساب مدیر جدید از خط فرمان سرور انجام می‌شود.</p>
+      <form id="password-form" class="grid-form" autocomplete="off">
+        <label class="wide">رمز عبور فعلی
+          <input name="currentPassword" type="password" autocomplete="current-password" required maxlength="200" dir="ltr">
+        </label>
+        <label>رمز عبور تازه
+          <input name="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+        </label>
+        <label>تکرار رمز عبور تازه
+          <input name="confirmPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+        </label>
+        <div class="wide actions">
+          <button class="btn primary" type="submit">تغییر رمز عبور</button>
         </div>
         <p class="form-msg wide" data-msg role="status"></p>
       </form>

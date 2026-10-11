@@ -5,11 +5,14 @@ checked by the caller, so one restaurant's data cannot be reached through anothe
 Standard library only.
 """
 import json
+import os
 import re
 import secrets
 import sqlite3
 import time
 from pathlib import Path
+
+from . import jalali, schedule
 
 # Keep in sync with themes.js. Names are shown in the owner panel only.
 THEMES = (
@@ -21,6 +24,7 @@ THEMES = (
     ('valentine', 'ولنتاین', 'رز و نور گرم'),
     ('halloween', 'هالووین', 'ماه، مه و فانوس'),
     ('autumn', 'پاییز', 'برگ و دارچین'),
+    ('spring', 'بهار', 'شکوفه و سبزهٔ تازه'),
 )
 THEME_IDS = frozenset(theme[0] for theme in THEMES)
 
@@ -52,6 +56,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
   description TEXT NOT NULL DEFAULT '',
   footer TEXT NOT NULL DEFAULT '',
   theme TEXT NOT NULL DEFAULT 'default',
+  manual_theme TEXT,
   created_at INTEGER NOT NULL,
   updated_at INTEGER NOT NULL
 );
@@ -61,6 +66,7 @@ CREATE TABLE IF NOT EXISTS categories (
   name TEXT NOT NULL,
   icon TEXT NOT NULL,
   position INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
   PRIMARY KEY (restaurant_slug, id)
 );
 CREATE TABLE IF NOT EXISTS items (
@@ -92,6 +98,24 @@ CREATE TABLE IF NOT EXISTS sessions (
   user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   csrf_token TEXT NOT NULL,
   expires_at INTEGER NOT NULL
+);
+CREATE TABLE IF NOT EXISTS theme_rules (
+  restaurant_slug TEXT NOT NULL REFERENCES restaurants(slug) ON DELETE CASCADE,
+  key TEXT NOT NULL,
+  kind TEXT NOT NULL,
+  label TEXT NOT NULL,
+  theme TEXT NOT NULL,
+  enabled INTEGER NOT NULL DEFAULT 0,
+  calendar TEXT NOT NULL,
+  start_month INTEGER NOT NULL,
+  start_day INTEGER NOT NULL,
+  end_month INTEGER NOT NULL,
+  end_day INTEGER NOT NULL,
+  priority INTEGER NOT NULL DEFAULT 50,
+  timezone TEXT NOT NULL DEFAULT 'Asia/Tehran',
+  position INTEGER NOT NULL DEFAULT 0,
+  updated_at INTEGER NOT NULL,
+  PRIMARY KEY (restaurant_slug, key)
 );
 """
 
@@ -199,14 +223,42 @@ def init_db(path, seed_dir):
     conn = connect(path)
     try:
         conn.executescript(SCHEMA)
+        migrate(conn)
         already = conn.execute("SELECT 1 FROM meta WHERE key='seeded'").fetchone()
         if not already:
             with conn:
                 for seed_file in sorted(Path(seed_dir).glob('*.json')):
                     seed_restaurant(conn, json.loads(seed_file.read_text(encoding='utf-8')))
                 conn.execute("INSERT INTO meta(key, value) VALUES('seeded', '1')")
+        with conn:
+            for row in conn.execute('SELECT slug FROM restaurants').fetchall():
+                ensure_rules(conn, row['slug'])
     finally:
         conn.close()
+
+
+def migrate(conn):
+    """Add columns introduced after the first release. Safe to run more than once."""
+    with conn:
+        columns = {row['name'] for row in conn.execute('PRAGMA table_info(categories)')}
+        if 'enabled' not in columns:
+            conn.execute('ALTER TABLE categories ADD COLUMN enabled INTEGER NOT NULL DEFAULT 1')
+        columns = {row['name'] for row in conn.execute('PRAGMA table_info(restaurants)')}
+        if 'manual_theme' not in columns:
+            conn.execute('ALTER TABLE restaurants ADD COLUMN manual_theme TEXT')
+
+
+def ensure_rules(conn, slug):
+    """Create the default schedule rules for a restaurant (disabled). Existing rules are kept."""
+    stamp = now()
+    for position, (key, kind, theme, label, calendar, start, end, priority) in enumerate(schedule.DEFAULT_RULES):
+        conn.execute(
+            'INSERT OR IGNORE INTO theme_rules (restaurant_slug, key, kind, label, theme, enabled, calendar,'
+            ' start_month, start_day, end_month, end_day, priority, timezone, position, updated_at)'
+            ' VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            (slug, key, kind, label, theme, calendar, start[0], start[1], end[0], end[1], priority,
+             schedule.TIMEZONE_NAME, position, stamp),
+        )
 
 
 def seed_restaurant(conn, data):
@@ -249,6 +301,7 @@ def create_restaurant(conn, slug, name, english_name='', theme='default'):
             ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             (slug, name, english_name, name[:1], name, '', '', '', theme, stamp, stamp),
         )
+        ensure_rules(conn, slug)
     return slug
 
 
@@ -285,19 +338,22 @@ def restaurant_exists(conn, slug):
     return conn.execute('SELECT 1 FROM restaurants WHERE slug=?', (slug,)).fetchone() is not None
 
 
-def public_menu(conn, slug):
+def public_menu(conn, slug, now=None):
     row = conn.execute('SELECT * FROM restaurants WHERE slug=?', (slug,)).fetchone()
     if row is None:
         return None
     categories = conn.execute(
-        'SELECT id, name, icon FROM categories WHERE restaurant_slug=? ORDER BY position, id', (slug,)).fetchall()
+        'SELECT id, name, icon FROM categories WHERE restaurant_slug=? AND enabled=1 ORDER BY position, id',
+        (slug,)).fetchall()
     items = conn.execute(
-        'SELECT * FROM items WHERE restaurant_slug=? AND visible=1 ORDER BY position, id', (slug,)).fetchall()
+        'SELECT i.* FROM items i JOIN categories c ON c.restaurant_slug = i.restaurant_slug AND c.id = i.category_id'
+        ' WHERE i.restaurant_slug=? AND i.visible=1 AND c.enabled=1 ORDER BY i.position, i.id', (slug,)).fetchall()
+    active = resolve_theme(conn, slug, now)
     return {
         'restaurant': {
             'slug': row['slug'], 'name': row['name'], 'englishName': row['english_name'], 'mark': row['mark'],
             'headline': row['headline'], 'note': row['note'], 'description': row['description'],
-            'footer': row['footer'], 'theme': row['theme'],
+            'footer': row['footer'], 'theme': active['theme'],
         },
         'categories': [{'id': c['id'], 'name': c['name'], 'icon': c['icon']} for c in categories],
         'items': [
@@ -311,24 +367,50 @@ def public_menu(conn, slug):
     }
 
 
+def rules_for(conn, slug):
+    rows = conn.execute('SELECT * FROM theme_rules WHERE restaurant_slug=? ORDER BY position, key', (slug,)).fetchall()
+    return [dict(row) for row in rows]
+
+
+def _moment(now):
+    return now or schedule.tehran_now(os.environ.get('MENU_TEST_NOW') or None)
+
+
+def resolve_theme(conn, slug, now=None):
+    row = conn.execute('SELECT theme, manual_theme FROM restaurants WHERE slug=?', (slug,)).fetchone()
+    if row is None:
+        raise ApiError('رستوران پیدا نشد.', 404)
+    return schedule.resolve(_moment(now), rules_for(conn, slug), row['theme'], row['manual_theme'])
+
+
+
 # ----- owner reads and writes ---------------------------------------------------
 
-def admin_view(conn, slug):
+def admin_view(conn, slug, now=None):
     row = conn.execute('SELECT * FROM restaurants WHERE slug=?', (slug,)).fetchone()
     if row is None:
         raise ApiError('رستوران پیدا نشد.', 404)
     categories = conn.execute(
-        'SELECT id, name, icon, position FROM categories WHERE restaurant_slug=? ORDER BY position, id', (slug,)).fetchall()
+        'SELECT id, name, icon, position, enabled FROM categories WHERE restaurant_slug=? ORDER BY position, id',
+        (slug,)).fetchall()
     items = conn.execute(
         'SELECT * FROM items WHERE restaurant_slug=? ORDER BY position, id', (slug,)).fetchall()
+    rules = rules_for(conn, slug)
+    moment = _moment(now)
+    resolution = schedule.resolve(moment, rules, row['theme'], row['manual_theme'])
+    today = schedule.today_views(moment)
+    theme_names = {theme[0]: theme[1] for theme in THEMES}
     return {
         'restaurant': {
             'slug': row['slug'], 'name': row['name'], 'englishName': row['english_name'], 'mark': row['mark'],
             'headline': row['headline'], 'note': row['note'], 'description': row['description'],
-            'footer': row['footer'], 'theme': row['theme'],
+            'footer': row['footer'], 'theme': row['theme'], 'defaultTheme': row['theme'],
+            'manualTheme': row['manual_theme'],
         },
         'categories': [
-            {'id': c['id'], 'name': c['name'], 'icon': c['icon'], 'position': c['position']} for c in categories
+            {'id': c['id'], 'name': c['name'], 'icon': c['icon'], 'position': c['position'],
+             'enabled': bool(c['enabled'])}
+            for c in categories
         ],
         'items': [
             {
@@ -340,7 +422,27 @@ def admin_view(conn, slug):
         ],
         'themes': [{'id': t[0], 'name': t[1], 'hint': t[2]} for t in THEMES],
         'icons': [{'id': i[0], 'name': i[1]} for i in ICONS],
+        'activeTheme': {
+            'theme': resolution['theme'], 'themeName': theme_names.get(resolution['theme'], resolution['theme']),
+            'source': resolution['source'], 'rule': resolution['rule'], 'conflict': resolution['conflict'],
+        },
+        'schedule': {
+            'timezone': schedule.TIMEZONE_NAME,
+            'today': {'gregorian': today['gregorianText'], 'jalali': today['jalaliText'], 'time': today['time']},
+            'rules': [
+                {
+                    'key': r['key'], 'kind': r['kind'], 'label': r['label'], 'theme': r['theme'],
+                    'themeName': theme_names.get(r['theme'], r['theme']), 'enabled': bool(r['enabled']),
+                    'calendar': r['calendar'], 'startMonth': r['start_month'], 'startDay': r['start_day'],
+                    'endMonth': r['end_month'], 'endDay': r['end_day'], 'priority': r['priority'],
+                    'timezone': r['timezone'], 'window': schedule.describe_window(r),
+                    'matchesToday': schedule.rule_is_active(r, today),
+                }
+                for r in rules
+            ],
+        },
     }
+
 
 
 PROFILE_LIMITS = {
@@ -373,12 +475,23 @@ def update_profile(conn, slug, payload):
                      (*values.values(), now(), slug))
 
 
-def set_theme(conn, slug, theme):
+def set_manual_theme(conn, slug, theme):
+    """Set the manager's override, or clear it when theme is None (back to the schedule)."""
+    theme = None if theme is None else clean_theme(theme)
+    with conn:
+        cursor = conn.execute('UPDATE restaurants SET manual_theme=?, updated_at=? WHERE slug=?',
+                              (theme, now(), slug))
+    if cursor.rowcount != 1:
+        raise ApiError('رستوران پیدا نشد.', 404)
+
+
+def set_default_theme(conn, slug, theme):
     theme = clean_theme(theme)
     with conn:
         cursor = conn.execute('UPDATE restaurants SET theme=?, updated_at=? WHERE slug=?', (theme, now(), slug))
     if cursor.rowcount != 1:
         raise ApiError('رستوران پیدا نشد.', 404)
+
 
 
 def _category_row(conn, slug, category_id):
@@ -394,28 +507,35 @@ def save_category(conn, slug, payload, category_id=None):
             raise ApiError('رستوران پیدا نشد.', 404)
         name = clean_text(payload.get('name'), 'نام دسته‌بندی', 1, 40)
         icon = clean_icon(payload.get('icon', 'bowl'))
-        last = conn.execute('SELECT COALESCE(MAX(position), -1) FROM categories WHERE restaurant_slug=?', (slug,)).fetchone()[0]
+        enabled = int(clean_bool(payload.get('enabled', True), 'وضعیت دسته‌بندی'))
+        last = conn.execute('SELECT COALESCE(MAX(position), -1) FROM categories WHERE restaurant_slug=?',
+                            (slug,)).fetchone()[0]
         position = clean_int(payload.get('position', last + 1), 'ترتیب', 0, 9999)
         new_id = None
         for _ in range(5):
             candidate = 'cat-' + secrets.token_hex(4)
-            if not conn.execute('SELECT 1 FROM categories WHERE restaurant_slug=? AND id=?', (slug, candidate)).fetchone():
+            if not conn.execute('SELECT 1 FROM categories WHERE restaurant_slug=? AND id=?',
+                                (slug, candidate)).fetchone():
                 new_id = candidate
                 break
         if new_id is None:
             raise ApiError('ساخت شناسه دسته‌بندی ناموفق بود؛ دوباره تلاش کنید.', 500)
         with conn:
-            conn.execute('INSERT INTO categories (restaurant_slug, id, name, icon, position) VALUES (?, ?, ?, ?, ?)',
-                         (slug, new_id, name, icon, position))
+            conn.execute(
+                'INSERT INTO categories (restaurant_slug, id, name, icon, position, enabled) VALUES (?, ?, ?, ?, ?, ?)',
+                (slug, new_id, name, icon, position, enabled))
         return new_id
     row = _category_row(conn, slug, category_id)
     name = clean_text(payload['name'] if 'name' in payload else row['name'], 'نام دسته‌بندی', 1, 40)
     icon = clean_icon(payload['icon'] if 'icon' in payload else row['icon'])
     position = clean_int(payload['position'] if 'position' in payload else row['position'], 'ترتیب', 0, 9999)
+    enabled = int(clean_bool(payload['enabled'] if 'enabled' in payload else bool(row['enabled']),
+                             'وضعیت دسته‌بندی'))
     with conn:
-        conn.execute('UPDATE categories SET name=?, icon=?, position=? WHERE restaurant_slug=? AND id=?',
-                     (name, icon, position, slug, category_id))
+        conn.execute('UPDATE categories SET name=?, icon=?, position=?, enabled=? WHERE restaurant_slug=? AND id=?',
+                     (name, icon, position, enabled, slug, category_id))
     return category_id
+
 
 
 def delete_category(conn, slug, category_id):
@@ -467,7 +587,7 @@ def save_item(conn, slug, payload, item_id=None):
     description = clean_text(pick('description', base.get('description')), 'توضیحات', 0, 400, multiline=True)
     ingredients = clean_text(pick('ingredients', base.get('ingredients')), 'ترکیبات', 0, 400, multiline=True)
     allergens = json.dumps(clean_allergens(pick('allergens', json_list(base.get('allergens')))), ensure_ascii=False)
-    price = clean_int(pick('price', base.get('price')), 'قیمت', 0, MAX_PRICE)
+    price = parse_price(pick('price', base.get('price')))
     icon = clean_icon(pick('icon', base.get('icon')))
     label = clean_text(pick('label', base.get('label') or ''), 'برچسب', 0, 30) or None
     visible = int(clean_bool(pick('visible', bool(base.get('visible'))), 'وضعیت نمایش'))
@@ -491,6 +611,80 @@ def delete_item(conn, slug, item_id):
     _item_row(conn, slug, item_id)
     with conn:
         conn.execute('DELETE FROM items WHERE restaurant_slug=? AND id=?', (slug, item_id))
+
+
+def reorder_categories(conn, slug, order):
+    """Set the display order of all categories in one step. `order` must list every category once."""
+    if not isinstance(order, list) or not all(isinstance(entry, str) for entry in order):
+        raise ApiError('ترتیب دسته‌بندی‌ها معتبر نیست.')
+    current = [row['id'] for row in conn.execute('SELECT id FROM categories WHERE restaurant_slug=?', (slug,))]
+    if len(set(order)) != len(order) or sorted(current) != sorted(order):
+        raise ApiError('فهرست دسته‌بندی‌ها تغییر کرده است؛ صفحه را دوباره بارگذاری کنید.', 409)
+    with conn:
+        for position, category_id in enumerate(order):
+            conn.execute('UPDATE categories SET position=? WHERE restaurant_slug=? AND id=?',
+                         (position, slug, category_id))
+
+
+_DIGIT_MAP = str.maketrans('۰۱۲۳۴۵۶۷۸۹٠١٢٣٤٥٦٧٨٩', '01234567890123456789')
+_PRICE_NOISE_RE = re.compile('[\s\u200c\u200e\u200f\u202a-\u202e\u066c\u060c,\u2066-\u2069]')
+
+
+def parse_price(value):
+    """Toman price as an integer. Accepts 145000, '145000', '۱۴۵٬۰۰۰' and '145,000'.
+    Refuses negative values, decimals and empty input."""
+    if isinstance(value, bool):
+        raise ApiError('قیمت باید عدد باشد.')
+    if isinstance(value, int):
+        text = str(value)
+    elif isinstance(value, str):
+        text = value
+    else:
+        raise ApiError('قیمت باید عدد باشد.')
+    text = _PRICE_NOISE_RE.sub('', text.translate(_DIGIT_MAP)).strip()
+    if not text:
+        raise ApiError('قیمت الزامی است.')
+    if text[0] in '-\u2212\u2013':
+        raise ApiError('قیمت نمی‌تواند منفی باشد.')
+    if not re.fullmatch(r'[0-9]+', text):
+        raise ApiError('قیمت فقط باید شامل رقم باشد (بدون اعشار).')
+    amount = int(text)
+    if amount > MAX_PRICE:
+        raise ApiError('قیمت از حد مجاز بیشتر است.')
+    return amount
+
+
+def update_rule(conn, slug, key, payload):
+    row = conn.execute('SELECT * FROM theme_rules WHERE restaurant_slug=? AND key=?', (slug, key)).fetchone()
+    if row is None:
+        raise ApiError('برنامهٔ تم پیدا نشد.', 404)
+    enabled = int(clean_bool(payload.get('enabled', bool(row['enabled'])), 'وضعیت برنامه'))
+    calendar = payload.get('calendar', row['calendar'])
+    theme = clean_theme(payload.get('theme', row['theme']))
+    priority = clean_int(payload.get('priority', row['priority']), 'اولویت', *schedule.PRIORITY_RANGE)
+    start_month = clean_int(payload.get('startMonth', row['start_month']), 'ماه شروع', 1, 12)
+    start_day = clean_int(payload.get('startDay', row['start_day']), 'روز شروع', 1, 31)
+    end_month = clean_int(payload.get('endMonth', row['end_month']), 'ماه پایان', 1, 12)
+    end_day = clean_int(payload.get('endDay', row['end_day']), 'روز پایان', 1, 31)
+    start_month, start_day, end_month, end_day = schedule.validate_window(
+        calendar, start_month, start_day, end_month, end_day)
+    with conn:
+        conn.execute(
+            'UPDATE theme_rules SET enabled=?, calendar=?, theme=?, priority=?, start_month=?, start_day=?,'
+            ' end_month=?, end_day=?, updated_at=? WHERE restaurant_slug=? AND key=?',
+            (enabled, calendar, theme, priority, start_month, start_day, end_month, end_day, now(), slug, key))
+
+
+def user_password_hash(conn, user_id):
+    row = conn.execute('SELECT password_hash FROM users WHERE id=?', (user_id,)).fetchone()
+    return row['password_hash'] if row else None
+
+
+def change_password(conn, user_id, new_hash, keep_digest):
+    """Store the new hash and end every other session of this user; the current session stays."""
+    with conn:
+        conn.execute('UPDATE users SET password_hash=? WHERE id=?', (new_hash, user_id))
+        conn.execute('DELETE FROM sessions WHERE user_id=? AND token_hash<>?', (user_id, keep_digest))
 
 
 # ----- sessions ----------------------------------------------------------------

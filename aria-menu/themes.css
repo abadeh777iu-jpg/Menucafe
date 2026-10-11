@@ -17,6 +17,12 @@
  --theme-body:#e1d1d8;--theme-secondary:#cbbbcb;--theme-alert:#dec098;
  color-scheme:dark;
 }
+:root[data-theme="spring"]{
+ --paper:#f5faf1;--card-bg:#fdfffb;--ink:#2d4a36;--muted:#5d7262;--line:#d6e6cf;
+ --green:#3b7050;--orange:#c0587a;--theme-soft:#e8f3e2;--theme-outline:#b7d3ab;
+ --theme-petal:#f6d3df;--theme-gold:#d8b25e;--theme-leaf:#9fca8f;
+ --theme-body:#4d6b53;--theme-secondary:#607a66;--theme-alert:#7a6a43;
+}
 :root[data-theme="autumn"]{
  --paper:#faf1e5;--card-bg:#fff9ef;--ink:#513c2c;--muted:#78624c;--line:#e7d5bc;
  --green:#7e4b2c;--orange:#a34a20;--theme-soft:#f0e1c9;--theme-outline:#d6b58c;

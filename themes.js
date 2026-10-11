@@ -7,8 +7,11 @@
     {id:'default', name:'پیش‌فرض', hint:'زیتونی و آرام', symbol:'✧'},
     ...Object.entries(window.OccasionVisuals || {}).map(([id, visual]) => ({id, name:visual.name, hint:visual.hint, symbol:visual.symbol})),
     {id:'autumn', name:'پاییز', hint:'برگ و دارچین', symbol:'❧'},
+    {id:'spring', name:'بهار', hint:'شکوفه و سبزهٔ تازه', symbol:'✿'},
   ];
   const valid = new Set(definitions.map(theme => theme.id));
+  // Set only on the owner's preview page (injected by the server). Public pages never have it.
+  const previewTheme = typeof window.MENU_PREVIEW_THEME === 'string' ? window.MENU_PREVIEW_THEME : '';
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let activeTheme = 'default';
   let defaultArt = '';
@@ -18,6 +21,11 @@
     ${inner}<path d="M32 187h176M80 196h81" stroke="var(--theme-outline)" stroke-linecap="round"/>
   </svg>`;
   const arts = {
+    spring: svg(`<path d="M120 187V104" stroke="var(--green)" stroke-width="2" stroke-linecap="round"/>
+      <path d="M120 150c-22-6-40-22-44-44 26 0 42 12 44 44Z" fill="var(--theme-leaf)" stroke="var(--green)"/>
+      <path d="M120 130c16-4 30-16 34-36-24 0-36 12-34 36Z" fill="var(--theme-leaf)" stroke="var(--green)"/>
+      <g fill="var(--theme-petal)" stroke="var(--orange)"><circle cx="120" cy="92" r="11"/><circle cx="144" cy="104" r="10"/><circle cx="97" cy="104" r="10"/><circle cx="132" cy="68" r="9"/><circle cx="108" cy="70" r="8"/></g>
+      <circle cx="120" cy="92" r="3.5" fill="var(--theme-gold)"/><circle cx="144" cy="104" r="2.5" fill="var(--theme-gold)"/><circle cx="97" cy="104" r="2.5" fill="var(--theme-gold)"/>`),
     autumn: svg(`<path d="M117 180c-3-40 4-66 18-106M123 135l-39-23M124 127l34-21" stroke="var(--green)" stroke-width="2" stroke-linecap="round"/>
       <path d="M134 116C92 82 120 43 153 33c12 34 22 64-19 83Z" fill="var(--theme-petal)" stroke="var(--orange)"/>
       <path d="m134 111 14-58m-8 40-13-14m18-1 13-14" stroke="var(--orange)" stroke-width="1.4"/>
@@ -62,7 +70,8 @@
   window.MenuThemes = {
     mount(restaurant) {
       if (!defaultArt) defaultArt = document.querySelector('.hero-art').outerHTML;
-      apply(valid.has(restaurant.theme) ? restaurant.theme : 'default');
+      const chosen = valid.has(previewTheme) ? previewTheme : restaurant.theme;
+      apply(valid.has(chosen) ? chosen : 'default');
     }
   };
 })();

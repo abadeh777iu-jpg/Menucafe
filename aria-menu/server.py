@@ -26,7 +26,7 @@ from contextlib import closing
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from shutil import copyfileobj
-from urllib.parse import urlsplit
+from urllib.parse import parse_qs, urlsplit
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
@@ -48,6 +48,7 @@ STATIC = {
 PAGE_FILES = {'/admin.html', '/admin.js', '/admin.css'}
 RESTAURANT_PAGE = re.compile(r'^/(?P<slug>[a-z0-9][a-z0-9-]{1,39})/?$')
 ADMIN_PAGE = re.compile(r'^/admin/(?P<slug>[a-z0-9][a-z0-9-]{1,39})/?$')
+PREVIEW_PAGE = re.compile(r'^/admin/(?P<slug>[a-z0-9][a-z0-9-]{1,39})/preview/?$')
 API_MENU = re.compile(r'^/api/restaurants/(?P<slug>[a-z0-9][a-z0-9-]{1,39})/menu$')
 
 NOT_FOUND = '''<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8">
@@ -115,6 +116,9 @@ class Handler(SimpleHTTPRequestHandler):
         if path in STATIC or path in PAGE_FILES:
             self.path = path
             return self._serve_file(method)
+        match = PREVIEW_PAGE.match(path)
+        if match:
+            return self._preview(match.group('slug'))
         match = ADMIN_PAGE.match(path)
         if match:
             with closing(store.connect(self.server.db_path)) as conn:
@@ -129,6 +133,25 @@ class Handler(SimpleHTTPRequestHandler):
                     self.path = '/index.html'
                     return self._serve_file(method)
         return self._not_found()
+
+    def _preview(self, slug):
+        """Owner-only preview of the public menu with a chosen theme. The theme is injected into
+        this response only; the public page never reads it from the URL."""
+        query = parse_qs(urlsplit(self.path).query)
+        theme = (query.get('theme') or [''])[0]
+        with closing(store.connect(self.server.db_path)) as conn:
+            session = self._session_row(conn)
+        if session is None or session['restaurant_slug'] != slug:
+            return self._send(302, b'', 'text/plain; charset=utf-8',
+                              [('Location', f'/admin/{slug}')])
+        if theme not in store.THEME_IDS:
+            raise ApiError('تم انتخاب‌شده معتبر نیست.')
+        html = (ROOT / 'index.html').read_text(encoding='utf-8')
+        marker = ('<script>window.MENU_PREVIEW_SLUG="' + slug + '";'
+                  'window.MENU_PREVIEW_THEME="' + theme + '";</script>')
+        html = html.replace('</head>', marker + '</head>', 1)
+        self._send(200, html.encode('utf-8'), 'text/html; charset=utf-8',
+                   [('Cache-Control', 'no-store'), ('X-Robots-Tag', 'noindex, nofollow')])
 
     def _serve_file(self, method):
         if method == 'HEAD':
@@ -266,18 +289,33 @@ class Handler(SimpleHTTPRequestHandler):
         tail = rest[1:]
         writes = method in ('POST', 'PUT', 'DELETE')
         with closing(store.connect(self.server.db_path)) as conn:
-            self._require(conn, slug=slug, csrf=writes)
+            session = self._require(conn, slug=slug, csrf=writes)
             if method == 'GET' and not tail:
                 return self._json(200, store.admin_view(conn, slug))
             if tail == ['profile'] and method == 'PUT':
                 store.update_profile(conn, slug, self._body())
                 return self._json(200, store.admin_view(conn, slug))
             if tail == ['theme'] and method == 'PUT':
-                store.set_theme(conn, slug, self._body().get('theme'))
+                body = self._body()
+                if 'theme' not in body:
+                    raise ApiError('تم انتخاب‌شده معتبر نیست.')
+                store.set_manual_theme(conn, slug, body['theme'])
+                return self._json(200, store.admin_view(conn, slug))
+            if tail == ['default-theme'] and method == 'PUT':
+                store.set_default_theme(conn, slug, self._body().get('theme'))
+                return self._json(200, store.admin_view(conn, slug))
+            if len(tail) == 2 and tail[0] == 'schedule' and method == 'PUT':
+                store.update_rule(conn, slug, tail[1], self._body())
+                return self._json(200, store.admin_view(conn, slug))
+            if tail == ['account', 'password'] and method == 'POST':
+                self._change_password(conn, session, slug)
                 return self._json(200, store.admin_view(conn, slug))
             if tail == ['categories'] and method == 'POST':
                 store.save_category(conn, slug, self._body())
                 return self._json(201, store.admin_view(conn, slug))
+            if tail == ['categories', 'order'] and method == 'PUT':
+                store.reorder_categories(conn, slug, self._body().get('order'))
+                return self._json(200, store.admin_view(conn, slug))
             if len(tail) == 2 and tail[0] == 'categories':
                 category_id = tail[1]
                 if method == 'PUT':
@@ -298,6 +336,27 @@ class Handler(SimpleHTTPRequestHandler):
                     store.delete_item(conn, slug, item_id)
                     return self._json(200, store.admin_view(conn, slug))
         raise ApiError('آدرس پیدا نشد.', 404)
+
+    def _change_password(self, conn, session, slug):
+        body = self._body()
+        current = str(body.get('currentPassword') or '')
+        new = str(body.get('newPassword') or '')
+        key = (self.client_address[0], 'password:' + session['username'])
+        if _throttle.blocked(key):
+            raise ApiError('تعداد تلاش‌ها زیاد است؛ چند دقیقه بعد دوباره امتحان کنید.', 429)
+        stored = store.user_password_hash(conn, session['user_id']) or security.dummy_hash()
+        if not security.verify_password(current, stored):
+            _throttle.record_failure(key)
+            raise ApiError('رمز عبور فعلی درست نیست.', 403)
+        if len(new) < security.PASSWORD_MIN_LENGTH:
+            raise ApiError(f'رمز عبور تازه باید حداقل {security.PASSWORD_MIN_LENGTH} نویسه باشد.')
+        if len(new) > security.PASSWORD_MAX_LENGTH:
+            raise ApiError('رمز عبور تازه بیش از حد طولانی است.')
+        if new == current:
+            raise ApiError('رمز عبور تازه باید با رمز فعلی متفاوت باشد.')
+        _throttle.reset(key)
+        store.change_password(conn, session['user_id'], security.hash_password(new),
+                              security.token_digest(self._cookie(COOKIE_NAME)))
 
     # ----- responses ------------------------------------------------------------
 

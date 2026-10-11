@@ -29,10 +29,10 @@ function renderMenu(){
 function updateTabs(){document.querySelectorAll('[data-category]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.category===active)));}
 let loadVersion=0;
 async function init(){const version=++loadVersion;try{
- const slug=window.DemoRoute ? window.DemoRoute.getSlug() : location.pathname.replace(/^\/+|\/+$/g,'');
+ const slug=window.MENU_PREVIEW_SLUG || (window.DemoRoute ? window.DemoRoute.getSlug() : location.pathname.replace(/^\/+|\/+$/g,''));
  const loaded=await window.MenuRepository.getMenu(slug);
  if(version!==loadVersion)return;
- menu=loaded; active='all';query='';
+ menu=loaded; menu.categories=(menu.categories||[]).filter(c=>c.enabled!==false); const enabledIds=new Set(menu.categories.map(c=>c.id)); menu.items=(menu.items||[]).filter(i=>i.visible!==false&&enabledIds.has(i.category)); active='all';query='';
  window.MenuThemes.mount(menu.restaurant);
  
  document.querySelector('#search').value='';
