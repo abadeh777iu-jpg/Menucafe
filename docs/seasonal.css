@@ -1,0 +1,113 @@
+/* Occasion editions v2: composition, materials, borders and illustrations.
+   The default edition is deliberately unchanged. Decorative motion only occurs
+   in the overflow-clipped .occasion-scene, outside all text and controls. */
+[hidden]{display:none!important}
+:root[data-theme="nowruz"]{
+ --paper:#f5f2e7;--card-bg:#fffdf5;--ink:#284b3c;--muted:#626f57;--line:#d9ddc6;
+ --green:#3b6850;--orange:#a86261;--theme-soft:#ebeeda;--theme-outline:#bdc9a4;
+ --theme-body:#4d6555;--theme-secondary:#6d755e;--theme-alert:#786244;
+}
+:root[data-theme="yalda"]{
+ --paper:#122931;--card-bg:#1b343b;--ink:#f8ecd7;--muted:#c6ccbf;--line:#39535a;
+ --green:#963d50;--orange:#dcba7e;--theme-soft:#233d43;--theme-outline:#6a7866;
+ --theme-body:#d4dfd8;--theme-secondary:#b8c8c2;--theme-alert:#dbc8a5;
+}
+.occasion-banner{text-align:center;font-size:11px;letter-spacing:.5px;padding:9px 18px;line-height:1.8}
+.occasion-intro>span{font-size:11px;letter-spacing:2px;color:var(--orange)}
+.occasion-intro h2{font-size:37px;line-height:1.85;font-weight:650;letter-spacing:-1px;margin:13px 0 7px;text-wrap:balance}
+.occasion-intro p{font-size:12px;line-height:2.2}
+.occasion-scene{margin:0;min-width:0;flex-shrink:0;pointer-events:none;isolation:isolate;overflow:hidden;opacity:1!important}
+.occasion-scene>svg{display:block;width:100%;height:auto;overflow:hidden}
+.occasion-scene figcaption{text-align:center;font-size:10px;letter-spacing:.2px;line-height:2.2;padding:5px 8px 10px;color:var(--muted)}
+:root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero .eyebrow{display:none}
+:root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero h1{font-size:19px;font-weight:500;letter-spacing:0;margin:24px 0 5px}
+:root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero-text{min-width:0;flex:1}
+:root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero #hero-description{font-size:12px}
+:root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero-note{font-size:10px;margin-top:15px}
+/* NOWRUZ: warm stationery, garden illustration and small tile-work details. */
+:root[data-theme="nowruz"] body{background-color:var(--paper);background-image:radial-gradient(#91a37b25 .7px,transparent .7px);background-size:9px 9px}
+:root[data-theme="nowruz"] header{background:#fcfaf0;border-top:5px solid #7c9270}
+:root[data-theme="nowruz"] .occasion-banner{background:#e9edda;color:#58754e;border-bottom:1px solid #d6ddbd}
+:root[data-theme="nowruz"] .hero{margin-top:28px;margin-bottom:30px;padding:27px 30px;gap:30px;background:#fbf8ed;border:1px solid #d4dcc1;border-radius:7px 7px 46px 7px;box-shadow:0 5px 0 #e6e8d5}
+:root[data-theme="nowruz"] .hero-text{padding:10px 4px 15px 0}
+:root[data-theme="nowruz"] .hero-art{width:47%;height:auto}
+:root[data-theme="nowruz"] .occasion-intro h2{color:#355940}
+:root[data-theme="nowruz"] .brand-mark{background:#456b51;border-radius:23px 23px 7px 7px}
+:root[data-theme="nowruz"] .navigation{border-top:3px double #b9c5a2;box-shadow:0 4px 12px #3b593409}
+:root[data-theme="nowruz"] .section-head{gap:12px}
+:root[data-theme="nowruz"] .section-icon{box-sizing:content-box;padding:8px;background:#e4ead5;border:1px solid #bdcaa5;border-radius:50% 50% 5px 50%;width:21px;height:21px;color:#5e7e51}
+:root[data-theme="nowruz"] .section-head:after{height:5px;background:radial-gradient(circle,#a7b996 1.4px,transparent 1.5px) right center / 13px 5px repeat-x;opacity:.8}
+:root[data-theme="nowruz"] .card{border-radius:5px 5px 23px 5px;border-color:#d9dfc7;border-top:3px solid #a6bb91;box-shadow:0 4px 0 #e6e9d8}
+:root[data-theme="nowruz"] .food-icon{border-radius:28px 28px 8px 8px;background:#edf1e1;color:#698551}
+:root[data-theme="nowruz"] .card-bottom{border-top:1px solid #dce4cb}
+:root[data-theme="nowruz"] .badge{background:#f3e4d9;color:#955856}
+:root[data-theme="nowruz"] .theme-lab{background:#fffdf5;border-radius:7px 7px 20px 7px}
+:root[data-theme="nowruz"] footer{border-top:6px double #c2ccaf;background:#eaf0de}
+/* YALDA: midnight salon, a Persian arch, woven borders and brass accents. */
+:root[data-theme="yalda"] body{background-color:var(--paper);background-image:repeating-linear-gradient(135deg,transparent,transparent 23px,#87a29206 23px,#87a29206 24px)}
+:root[data-theme="yalda"] header{background:#10252d;border-top:5px solid #a47f4f;border-bottom-color:#49605a}
+:root[data-theme="yalda"] .occasion-banner{background:#783745;color:#f4deba;border-bottom:2px solid #ac8b60;letter-spacing:1px}
+:root[data-theme="yalda"] .hero{padding:24px 28px 25px;margin-top:26px;margin-bottom:28px;gap:35px;border:1px solid #607061;outline:1px solid #334f50;outline-offset:5px;background:#183239;border-radius:110px 110px 8px 8px;flex-direction:row-reverse}
+:root[data-theme="yalda"] .hero-art{width:48%;height:auto}
+:root[data-theme="yalda"] .hero-text{text-align:center;padding:30px 12px 16px}
+:root[data-theme="yalda"] .hero h1{color:#dfc69e}
+:root[data-theme="yalda"] .occasion-intro h2{color:#f5e4c5;font-weight:500;font-size:34px}
+:root[data-theme="yalda"] .hero-note{justify-content:center}
+:root[data-theme="yalda"] .brand-mark{border-radius:8px;border:1px solid #d2b077;outline:1px solid #733548;outline-offset:3px;background:#7f3546}
+:root[data-theme="yalda"] .navigation{border-top:3px double #776c50;border-bottom:1px solid #756c52;background:#132a31}
+:root[data-theme="yalda"] .tab[aria-pressed="true"]{background:#873c4d;border:1px solid #ad8068;border-radius:5px}
+:root[data-theme="yalda"] .section-head h2{font-size:23px;letter-spacing:.2px;font-weight:500;color:#efd4a6}
+:root[data-theme="yalda"] .section-icon{box-sizing:content-box;border:1px solid #877553;padding:7px;width:22px;height:22px;border-radius:5px;background:#203b41;color:#d5ae76}
+:root[data-theme="yalda"] .section-head:after{height:4px;border-top:1px solid #736b51;border-bottom:1px solid #445b56;background:none;opacity:1}
+:root[data-theme="yalda"] .card{background:#1b343b;border:1px solid #596b5e;border-radius:3px;box-shadow:inset 0 0 0 4px #1b343b,inset 0 0 0 5px #334c49;padding:25px}
+:root[data-theme="yalda"] .food-icon{border-radius:28px 28px 5px 5px;background:#203c42;border:1px solid #6e7760;color:#d3b67d}
+:root[data-theme="yalda"] .badge{background:#613640;color:#f1c9b8;border:1px solid #8b5558}
+:root[data-theme="yalda"] .card-bottom{border-top:1px solid #506159}
+:root[data-theme="yalda"] .price{color:#f1d4a4}
+:root[data-theme="yalda"] .theme-lab{background:#193139;border:1px solid #63705b;border-radius:5px}
+:root[data-theme="yalda"] .notice{border-radius:3px;border-left:3px solid #b39362;border-right:3px solid #b39362}
+:root[data-theme="yalda"] footer{background:#10252d;border-top:5px double #8d7a52}
+/* Theme motion: no timer, canvas, external library, or full-page particle layer. */
+@keyframes occasion-sway{0%,100%{transform:rotate(-1deg)}50%{transform:rotate(1.4deg)}}
+@keyframes occasion-petals{0%,100%{transform:translate(0,0);opacity:.65}50%{transform:translate(-8px,12px);opacity:1}}
+@keyframes occasion-glow{0%,100%{opacity:.55}50%{opacity:1}}
+@keyframes occasion-flame{0%,100%{opacity:.75;transform:scaleX(.92)}50%{opacity:1;transform:scaleX(1.06)}}
+.motion-flame{transform-box:fill-box;transform-origin:bottom center}
+:root[data-effects="on"] .occasion-scene .motion-sway{animation:occasion-sway 8s ease-in-out infinite}
+:root[data-effects="on"] .occasion-scene .motion-petals{animation:occasion-petals 10s ease-in-out infinite}
+:root[data-effects="on"] .occasion-scene .motion-stars{animation:occasion-glow 5s ease-in-out infinite}
+:root[data-effects="on"] .occasion-scene .motion-flame{animation:occasion-flame 4s ease-in-out infinite}
+@media(prefers-reduced-motion:reduce){.occasion-scene *{animation:none!important;transition:none!important}}
+.effects-controls{display:flex;justify-content:space-between;align-items:center;gap:10px;border-top:1px solid var(--line);margin-top:13px;padding-top:9px}
+.effects-label{display:inline-flex;align-items:center;gap:8px;min-height:44px;font-size:11px;cursor:pointer;color:var(--ink)}
+.effects-label input{position:absolute;width:1px;height:1px;opacity:0}
+.effects-switch{display:inline-flex;align-items:center;width:32px;height:19px;background:var(--theme-outline);border-radius:20px;padding:3px;direction:ltr}
+.effects-switch:before{content:'';width:13px;height:13px;border-radius:50%;background:var(--card-bg);box-shadow:0 1px 3px #0002}
+.effects-label input:checked+.effects-switch{background:var(--green)}
+.effects-label input:checked+.effects-switch:before{transform:translateX(13px)}
+.effects-label input:focus-visible+.effects-switch{outline:3px solid var(--orange);outline-offset:3px}
+.effects-label:has(input:disabled){opacity:.55;cursor:default}
+.effects-note{font-size:10px;color:var(--theme-secondary);line-height:1.9;margin:0}
+.theme-preview{min-height:44px;padding:7px 11px;background:transparent;color:var(--ink);border:1px solid var(--line);border-radius:6px;font-size:10px}
+.theme-preview:hover{border-color:var(--orange)}
+@media(max-width:900px) and (min-width:601px){.occasion-intro h2{font-size:28px}:root[data-theme="yalda"] .occasion-intro h2{font-size:27px}:root[data-theme="nowruz"] .hero,:root[data-theme="yalda"] .hero{padding:20px;gap:16px}}
+@media(max-width:600px){
+ .occasion-banner{font-size:10px;padding:7px 18px}
+ :root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero{flex-direction:column;gap:0;margin-top:20px;margin-bottom:23px;padding:20px 17px 10px;align-items:stretch}
+ :root[data-theme="nowruz"] .hero{border-radius:5px 5px 32px 5px}
+ :root[data-theme="yalda"] .hero{border-radius:58px 58px 4px 4px;padding-top:26px}
+ :root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero-art{width:100%;height:auto;max-width:420px;margin:8px auto 0}
+ :root[data-theme="nowruz"] .hero-text{padding:0}
+ :root[data-theme="yalda"] .hero-text{padding:0 3px}
+ .occasion-intro h2,:root[data-theme="yalda"] .occasion-intro h2{font-size:26px;line-height:1.7;margin:10px 0}
+ .occasion-intro>span{font-size:10px;letter-spacing:1px}
+ .occasion-intro p{font-size:11px;line-height:2}
+ :root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero h1{font-size:15px;margin-top:18px}
+ :root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero #hero-description{font-size:11px;line-height:2}
+ :root:is([data-theme="nowruz"],[data-theme="yalda"]) .hero-note{font-size:9px;margin-top:10px}
+ .occasion-scene figcaption{font-size:9px;padding:0 0 7px}
+ :root[data-theme="yalda"] .card{padding:21px}
+ .effects-label{font-size:10px}.theme-preview{font-size:10px}
+}
+/* Long editorial labels must wrap rather than collide on narrow phones. */
+.theme-choice small{white-space:normal;line-height:1.7}
