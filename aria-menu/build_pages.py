@@ -1,6 +1,8 @@
 """Build a static copy of the demo menus for GitHub Pages.
 
-Output: ../docs (served by GitHub Pages at https://<user>.github.io/<repo>/).
+Output: the repository root (GitHub Pages serves the branch root at
+https://<user>.github.io/<repo>/). Only the entries listed in GENERATED are
+removed before a rebuild; nothing else in the repo is touched.
 The dev server (server.py) keeps using the sources here unchanged; this script
 only rewrites root-absolute paths so the same files work under a sub-path.
 
@@ -11,7 +13,7 @@ import shutil
 from pathlib import Path
 
 SRC = Path(__file__).resolve().parent
-OUT = SRC.parent / 'docs'
+OUT = SRC.parent
 
 RUNTIME_FILES = [
     'styles.css', 'themes.css', 'themes.js', 'seasonal.css', 'seasonal-art.js',
@@ -19,6 +21,7 @@ RUNTIME_FILES = [
     'atmosphere-art.js', 'atmosphere-effects.js', 'app.js', 'menu-data.js',
 ]
 RESTAURANTS = ['aria', 'bahar']
+GENERATED = RUNTIME_FILES + ['assets', 'data', 'aria', 'bahar', 'index.html', '.nojekyll']
 
 ROOT_REDIRECT = '''<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -57,9 +60,12 @@ def build_menu_data():
 
 
 def main():
-    if OUT.exists():
-        shutil.rmtree(OUT)
-    OUT.mkdir(parents=True)
+    for name in GENERATED:
+        target = OUT / name
+        if target.is_dir() and not target.is_symlink():
+            shutil.rmtree(target)
+        elif target.exists() or target.is_symlink():
+            target.unlink()
     (OUT / '.nojekyll').write_text('', encoding='utf-8')
     (OUT / 'index.html').write_text(ROOT_REDIRECT, encoding='utf-8')
 
