@@ -130,7 +130,7 @@ class BackendTests(unittest.TestCase):
         bahar = self.public_menu('bahar')
         self.assertEqual((len(aria['categories']), len(aria['items'])), (5, 12))
         self.assertEqual((len(bahar['categories']), len(bahar['items'])), (5, 10))
-        self.assertEqual(aria['restaurant']['theme'], 'summer')
+        self.assertEqual(aria['restaurant']['theme'], 'winter')
         self.assertEqual(bahar['restaurant']['theme'], 'default')
         self.assertEqual(set(aria['restaurant']), {'slug', 'name', 'englishName', 'mark', 'headline', 'note',
                                                     'description', 'footer', 'theme'})
