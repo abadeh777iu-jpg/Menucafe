@@ -318,6 +318,48 @@ def create_user(conn, username, restaurant_slug, password_hash):
         )
 
 
+def list_users(conn, slug):
+    rows = conn.execute(
+        'SELECT id, username, created_at FROM users WHERE restaurant_slug=? ORDER BY id', (slug,)).fetchall()
+    return [{'id': r['id'], 'username': r['username'], 'createdAt': r['created_at']} for r in rows]
+
+
+def add_user(conn, slug, username, password_hash):
+    """Owner-panel account creation. The new user can only ever act on this restaurant."""
+    try:
+        create_user(conn, username, slug, password_hash)
+    except sqlite3.IntegrityError:
+        raise ApiError('این نام کاربری قبلاً ثبت شده است.', 409)
+
+
+def _user_in_restaurant(conn, slug, user_id):
+    row = conn.execute('SELECT id FROM users WHERE id=? AND restaurant_slug=?', (user_id, slug)).fetchone()
+    if row is None:
+        raise ApiError('کاربر پیدا نشد.', 404)
+
+
+def reset_user_password(conn, slug, user_id, acting_user_id, password_hash):
+    """Set another owner's password and end all of that owner's sessions."""
+    if user_id == acting_user_id:
+        raise ApiError('برای تغییر رمز خودتان از بخش «حساب کاربری» استفاده کنید.', 400)
+    _user_in_restaurant(conn, slug, user_id)
+    with conn:
+        conn.execute('UPDATE users SET password_hash=? WHERE id=? AND restaurant_slug=?',
+                     (password_hash, user_id, slug))
+        conn.execute('DELETE FROM sessions WHERE user_id=?', (user_id,))
+
+
+def delete_user(conn, slug, user_id, acting_user_id):
+    """Remove another owner of this restaurant. The acting user is never deleted here, so at least
+    one owner always remains."""
+    if user_id == acting_user_id:
+        raise ApiError('حساب خودتان را از اینجا نمی‌توانید حذف کنید.', 400)
+    _user_in_restaurant(conn, slug, user_id)
+    with conn:
+        conn.execute('DELETE FROM sessions WHERE user_id=?', (user_id,))
+        conn.execute('DELETE FROM users WHERE id=? AND restaurant_slug=?', (user_id, slug))
+
+
 def set_password(conn, username, password_hash):
     username = clean_username(username)
     with conn:
@@ -395,6 +437,7 @@ def admin_view(conn, slug, now=None):
         (slug,)).fetchall()
     items = conn.execute(
         'SELECT * FROM items WHERE restaurant_slug=? ORDER BY position, id', (slug,)).fetchall()
+    users = list_users(conn, slug)
     rules = rules_for(conn, slug)
     moment = _moment(now)
     resolution = schedule.resolve(moment, rules, row['theme'], row['manual_theme'])
@@ -420,6 +463,7 @@ def admin_view(conn, slug, now=None):
             }
             for i in items
         ],
+        'users': users,
         'themes': [{'id': t[0], 'name': t[1], 'hint': t[2]} for t in THEMES],
         'icons': [{'id': i[0], 'name': i[1]} for i in ICONS],
         'activeTheme': {

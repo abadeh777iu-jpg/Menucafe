@@ -60,6 +60,15 @@ NOT_FOUND = '''<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8">
 _throttle = security.LoginThrottle()
 
 
+def _checked_new_password(value):
+    new = value if isinstance(value, str) else ''
+    if len(new) < security.PASSWORD_MIN_LENGTH:
+        raise ApiError(f'رمز عبور باید حداقل {security.PASSWORD_MIN_LENGTH} نویسه باشد.')
+    if len(new) > security.PASSWORD_MAX_LENGTH:
+        raise ApiError('رمز عبور بیش از حد طولانی است.')
+    return new
+
+
 def _json_bytes(payload):
     return json.dumps(payload, ensure_ascii=False).encode('utf-8')
 
@@ -335,6 +344,23 @@ class Handler(SimpleHTTPRequestHandler):
                 if method == 'DELETE':
                     store.delete_item(conn, slug, item_id)
                     return self._json(200, store.admin_view(conn, slug))
+            if tail == ['users'] and method == 'POST':
+                body = self._body()
+                password = _checked_new_password(body.get('password'))
+                store.add_user(conn, slug, body.get('username'), security.hash_password(password))
+                return self._json(201, store.admin_view(conn, slug))
+            if len(tail) == 2 and tail[0] == 'users' and tail[1].isdigit() and method == 'DELETE':
+                store.delete_user(conn, slug, int(tail[1]), session['user_id'])
+                return self._json(200, store.admin_view(conn, slug))
+            if len(tail) == 3 and tail[0] == 'users' and tail[1].isdigit() and tail[2] == 'password' \
+                    and method == 'POST':
+                user_id = int(tail[1])
+                body = self._body()
+                if user_id == session['user_id']:
+                    raise ApiError('برای تغییر رمز خودتان از بخش «حساب کاربری» استفاده کنید.', 400)
+                password = _checked_new_password(body.get('password'))
+                store.reset_user_password(conn, slug, user_id, session['user_id'], security.hash_password(password))
+                return self._json(200, store.admin_view(conn, slug))
         raise ApiError('آدرس پیدا نشد.', 404)
 
     def _change_password(self, conn, session, slug):
