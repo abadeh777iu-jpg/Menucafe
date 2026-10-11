@@ -1,0 +1,130 @@
+[
+  {
+    "width": 320,
+    "slug": "aria",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 58,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 320,
+    "slug": "bahar",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 58,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 375,
+    "slug": "aria",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 58,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 375,
+    "slug": "bahar",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 58,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 390,
+    "slug": "aria",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 58,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 390,
+    "slug": "bahar",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 58,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 768,
+    "slug": "aria",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 90,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 768,
+    "slug": "bahar",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 90,
+    "dpr": 1.5,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 1280,
+    "slug": "aria",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 90,
+    "dpr": 1.2908032327903392,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "width": 1280,
+    "slug": "bahar",
+    "liveCanvas": true,
+    "layers": 3,
+    "maxParticles": 90,
+    "dpr": 1.2908032327903392,
+    "searchCategoriesAndOldThemes": "passed",
+    "effectsStopAndRestart": "passed",
+    "noHorizontalOverflow": true
+  },
+  {
+    "independence": "theme and motion remembered per restaurant",
+    "reducedMotion": "all winter motion stopped",
+    "visibility": "simulated hidden event stops frame counter and pauses lights; resumes on visible"
+  },
+  {
+    "weakHardwareSimulation": {
+      "particles": 36,
+      "fpsCap": 24,
+      "dpr": 1,
+      "meanCanvasDrawMs": 0.991428571427241,
+      "maxCanvasDrawMs": 2.5
+    },
+    "note": "draw time only; not total rendering time or a guarantee on real phones"
+  },
+  {
+    "sandbox": "winter opens immediately; canvas and toggle work without localStorage"
+  }
+]

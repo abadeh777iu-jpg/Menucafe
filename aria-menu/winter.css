@@ -1,0 +1,84 @@
+/* Winter only. Content surfaces remain opaque so snow never crosses glyphs. */
+:root[data-theme="winter"][data-theme]{
+ --paper:#091b2d;--card-bg:#122b40;--ink:#ecf4f7;--muted:#adbecb;--line:#304b61;
+ --green:#467185;--orange:#dec59a;--theme-soft:#1b374b;--theme-outline:#547184;
+ --theme-body:#c6d6e0;--theme-secondary:#abc0cc;--theme-alert:#d6bf9b;
+ --theme-petal:#b2d4e6;--theme-gold:#e5c188;--theme-leaf:#688d94;color-scheme:dark;
+}
+#winter-snow{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;user-select:none;contain:strict}
+:root[data-theme="winter"] body{isolation:isolate;background:#091b2d;background-image:radial-gradient(ellipse at 16% 10%,#234958 0,transparent 42%),radial-gradient(ellipse at 93% 3%,#142e4c 0,transparent 47%);background-attachment:fixed}
+:root[data-theme="winter"] :is(header,main,footer,#occasion-banner){position:relative;z-index:1}
+:root[data-theme="winter"][data-theme] header{border-bottom:1px solid #3e5c6e;background:#0b2032}
+:root[data-theme="winter"][data-theme] .brand-mark{background:#244358;color:#d9ecf2;border-radius:22px 22px 7px 7px;border:1px solid #7798aa;box-shadow:inset 0 3px 0 #d9e7e9}
+:root[data-theme="winter"][data-theme] .sample{color:#bbccd7}
+:root[data-theme="winter"][data-theme] .sample i{background:#e7c08e;box-shadow:0 0 7px #e7c08e60}
+:root[data-theme="winter"][data-theme] .occasion-banner{padding:8px 18px;background:#122b40;border-bottom:1px solid #365266;color:#c7dbe7;font-size:10px;letter-spacing:1.2px}
+:root[data-theme="winter"][data-theme] .hero{padding:26px 0 17px;gap:35px;min-height:0;align-items:center}
+:root[data-theme="winter"][data-theme] .hero-art{width:49%;height:auto;margin:0}
+:root[data-theme="winter"][data-theme] .hero-text{flex:1;min-width:0;padding:24px 24px 20px;background:#0d2337;border:1px solid #314e63;border-radius:3px 30px 3px 3px;box-shadow:0 15px 45px #020e1920}
+:root[data-theme="winter"][data-theme] .hero .eyebrow{display:none}
+:root[data-theme="winter"][data-theme] .occasion-intro>span{display:inline-block;letter-spacing:1.2px;font-size:10px;color:#e1c394}
+:root[data-theme="winter"][data-theme] .occasion-intro h2{font-size:35px;line-height:1.8;font-weight:550;letter-spacing:-.8px;margin:13px 0 12px;color:#e6f2f8}
+:root[data-theme="winter"][data-theme] .occasion-intro p{font-size:12px;line-height:2.2;color:#b6cbd9}
+:root[data-theme="winter"][data-theme] .hero h1{font-size:17px;line-height:1.9;font-weight:500;margin:22px 0 8px;letter-spacing:0;color:#dfc9a5}
+:root[data-theme="winter"][data-theme] .hero #hero-description{font-size:12px;line-height:2.1;color:#b9cbd6}
+:root[data-theme="winter"][data-theme] .hero-note{font-size:10px;color:#aac0cd;margin-top:13px}
+:root[data-theme="winter"][data-theme] .scene-winter figcaption{background:#0b2134;border-radius:25px;font-size:10px;padding:8px 12px;margin:0 25px;color:#bed0de}
+#winter-controls{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-top:5px;margin-bottom:22px;padding:11px 15px;border:1px solid #365267;background:#10283c;border-radius:8px}
+.winter-controls-caption{font-size:11px;color:#bdd1df;display:flex;gap:8px;align-items:center}
+.winter-controls-caption svg{width:20px;height:20px;color:#c5e4ed}
+.winter-control-buttons{display:flex;gap:7px}
+.winter-control-buttons button{min-height:44px;padding:8px 13px;background:#18364c;color:#d8e7ef;border:1px solid #4a6578;border-radius:6px;font-size:11px}
+.winter-control-buttons button:hover{border-color:#d8bc8f}
+.winter-control-buttons button:disabled{opacity:.55;cursor:not-allowed}
+:root[data-theme="winter"][data-theme] .navigation{background:#0d2235;border-top:1px solid #628195;border-bottom:1px solid #365064;box-shadow:0 8px 24px #04132160}
+:root[data-theme="winter"][data-theme] .tab{color:#c2d4de}
+:root[data-theme="winter"][data-theme] .tab[aria-pressed="true"]{background:#c5dde5;color:#183b4d;box-shadow:inset 0 2px #f4f9fa;border-radius:7px}
+:root[data-theme="winter"][data-theme] .search{background:#142e43;border-color:#456174;color:#bcd3e2}
+:root[data-theme="winter"][data-theme] .search input::placeholder{color:#b1c6d3}
+:root[data-theme="winter"][data-theme] .menu-intro{padding:20px 13px 12px;background:#0d2337;border-radius:0 0 9px 9px;margin-bottom:20px}
+:root[data-theme="winter"][data-theme] .section-head{background:#10283b;padding:10px 12px;border-radius:8px;border:1px solid #2d485d;margin-bottom:19px}
+:root[data-theme="winter"][data-theme] .section-head h2{font-size:21px;font-weight:500;color:#d9e9f2}
+:root[data-theme="winter"][data-theme] .section-head:after{background:linear-gradient(to left,#658fa6,#29465b);height:1px;opacity:.8}
+:root[data-theme="winter"][data-theme] .section-icon{color:#c4e0ed}
+:root[data-theme="winter"][data-theme] .card{background:#122b40;border:1px solid #496476;border-radius:14px 14px 9px 9px;padding:25px;box-shadow:0 8px 24px #020c1630;isolation:isolate}
+:root[data-theme="winter"][data-theme] .card::before{content:'';position:absolute;top:-3px;right:16px;width:90px;height:5px;border-radius:90% 75% 30% 40%;background:#c8e0e8;box-shadow:0 1px 0 #89aec1;pointer-events:none}
+:root[data-theme="winter"][data-theme] .food-icon{background:#1c3b50;border:1px solid #55778a;color:#c7e1eb;border-radius:14px;box-shadow:inset 0 2px 0 #a4c5d5}
+:root[data-theme="winter"][data-theme] .card h3{color:#f0f6fa}
+:root[data-theme="winter"][data-theme] .description{color:#d0dfe8}
+:root[data-theme="winter"][data-theme] .ingredients{color:#aec3d1}
+:root[data-theme="winter"][data-theme] .ingredients b{color:#d0dfe8}
+:root[data-theme="winter"][data-theme] .badge{background:#493e32;color:#eed2a6;border:1px solid #766248}
+:root[data-theme="winter"][data-theme] .card-bottom{border-top:1px solid #39566b}
+:root[data-theme="winter"][data-theme] .price{color:#f1d7ae}
+:root[data-theme="winter"][data-theme] .allergens{color:#d6c4a7}
+:root[data-theme="winter"][data-theme] .notice{background:#182f41;border-color:#5a6973;color:#c6d8e3}
+:root[data-theme="winter"][data-theme] .theme-lab{background:#10283c;border:1px solid #456177;border-radius:10px;margin-top:15px;margin-bottom:35px}
+:root[data-theme="winter"][data-theme] .theme-lab h2{color:#d7e8f0}
+:root[data-theme="winter"][data-theme] footer{background:#0b2032;border-top:1px solid #486377}
+:root[data-theme="winter"][data-theme] .empty{background:#10283c;border-radius:10px}
+[data-theme-choice="winter"] .theme-symbol{background:#c9e0ee;color:#234860}
+/* Six selections stay available; no earlier theme has been removed. */
+.theme-options{grid-template-columns:repeat(6,minmax(0,1fr))}
+@keyframes winter-warm-light{0%,100%{opacity:.77}50%{opacity:1}}
+:root[data-theme="winter"][data-effects="on"] .winter-glow{animation:winter-warm-light 6s ease-in-out infinite}
+:root[data-theme="winter"][data-page-visible="false"] .winter-glow{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.winter-glow{animation:none!important}}
+@media(max-width:1050px) and (min-width:601px){.theme-options{grid-template-columns:repeat(3,minmax(0,1fr))}.theme-choice small{display:block}:root[data-theme="winter"][data-theme] .occasion-intro h2{font-size:27px}:root[data-theme="winter"][data-theme] .hero{gap:20px}}
+@media(max-width:600px){
+ .theme-options{grid-template-columns:repeat(2,minmax(0,1fr))}.theme-choice:first-child{grid-column:auto;min-height:54px}.theme-choice:first-child .theme-choice-text{flex-direction:column;align-items:flex-start;gap:3px}.theme-choice:first-child .theme-symbol{width:26px;height:31px}
+ :root[data-theme="winter"][data-theme] .hero{flex-direction:column;gap:0;padding:18px 0 10px;align-items:stretch}
+ :root[data-theme="winter"][data-theme] .hero-text{padding:21px 20px 17px;order:1;border-radius:3px 24px 3px 3px}
+ :root[data-theme="winter"][data-theme] .hero-art{width:100%;height:auto;order:2;margin:0}
+ :root[data-theme="winter"][data-theme] .occasion-intro h2{font-size:27px;line-height:1.75;letter-spacing:-.6px;margin:10px 0}
+ :root[data-theme="winter"][data-theme] .occasion-intro p{font-size:11px}
+ :root[data-theme="winter"][data-theme] .hero h1{font-size:15px;margin:15px 0 5px}
+ :root[data-theme="winter"][data-theme] .hero #hero-description{font-size:11px}
+ :root[data-theme="winter"][data-theme] .hero-note{font-size:9px;margin-top:10px}
+ :root[data-theme="winter"][data-theme] .scene-winter figcaption{font-size:9px;margin:0 5px}
+ #winter-controls{flex-wrap:wrap;padding:10px 12px;margin-top:8px;gap:8px}
+ .winter-controls-caption{font-size:10px}.winter-control-buttons{width:100%}.winter-control-buttons button{flex:1;font-size:10px}
+ :root[data-theme="winter"][data-theme] .card{padding:21px}
+ :root[data-theme="winter"][data-theme] .menu-intro{padding:15px 9px 10px}
+ :root[data-theme="winter"][data-theme] .section-head h2{font-size:19px}
+}

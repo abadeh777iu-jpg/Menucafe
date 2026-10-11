@@ -1,0 +1,162 @@
+{
+  "restaurant": {
+    "id": "bahar",
+    "slug": "bahar",
+    "name": "رستوران بهار",
+    "mark": "ب",
+    "englishName": "BAHAR RESTAURANT",
+    "headline": "طعم تازگی، عطر بهار.",
+    "description": "سفره‌ای از طعم‌های شمالی و سبزی‌های معطر؛ به رستوران بهار خوش آمدید.",
+    "note": "سهمی از تازگی، برای لحظه‌های شما",
+    "footer": "بهار؛ تازگی در هر لقمه",
+    "theme": "default"
+  },
+  "categories": [
+    {
+      "id": "appetizers",
+      "name": "شروع سبز",
+      "icon": "leaf"
+    },
+    {
+      "id": "northern",
+      "name": "غذاهای شمالی",
+      "icon": "rice"
+    },
+    {
+      "id": "grilled",
+      "name": "از روی آتش",
+      "icon": "kebab"
+    },
+    {
+      "id": "refreshments",
+      "name": "نوشیدنی‌های بهار",
+      "icon": "glass"
+    },
+    {
+      "id": "sweets",
+      "name": "پایان شیرین",
+      "icon": "cake"
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "category": "appetizers",
+      "name": "زیتون پرورده",
+      "description": "زیتون خوش‌طعم با چاشنی ترش انار و سبزی‌های معطر شمالی.",
+      "ingredients": "زیتون، گردو، رب انار، سیر، سبزی معطر",
+      "price": 125000,
+      "allergens": [
+        "گردو"
+      ],
+      "icon": "leaf",
+      "label": "پیشنهاد بهار"
+    },
+    {
+      "id": 2,
+      "category": "appetizers",
+      "name": "ماست و خیار",
+      "description": "ترکیبی خنک و لطیف با عطر نعناع و گل محمدی.",
+      "ingredients": "ماست، خیار، نعناع خشک، گل محمدی",
+      "price": 75000,
+      "allergens": [
+        "شیر"
+      ],
+      "icon": "bowl"
+    },
+    {
+      "id": 3,
+      "category": "northern",
+      "name": "باقلاقاتق با کته",
+      "description": "خوراک لطیف باقلا و شوید با تخم‌مرغ، در کنار کتهٔ ایرانی.",
+      "ingredients": "باقلای رشتی، شوید، سیر، تخم‌مرغ، برنج",
+      "price": 245000,
+      "allergens": [
+        "تخم‌مرغ"
+      ],
+      "icon": "rice"
+    },
+    {
+      "id": 4,
+      "category": "northern",
+      "name": "میرزاقاسمی با کته",
+      "description": "عطر دودی بادمجان کبابی با گوجه و سیر تازه.",
+      "ingredients": "بادمجان، گوجه‌فرنگی، سیر، تخم‌مرغ، برنج",
+      "price": 235000,
+      "allergens": [
+        "تخم‌مرغ"
+      ],
+      "icon": "bowl"
+    },
+    {
+      "id": 5,
+      "category": "northern",
+      "name": "مرغ ترش گیلانی",
+      "description": "مرغ آرام‌پز در سس سبزی‌های محلی و آب نارنج.",
+      "ingredients": "مرغ، سبزی محلی، لپه، سیر، تخم‌مرغ، آب نارنج، برنج",
+      "price": 335000,
+      "allergens": [
+        "تخم‌مرغ"
+      ],
+      "icon": "rice",
+      "label": "طعم شمال"
+    },
+    {
+      "id": 6,
+      "category": "grilled",
+      "name": "کباب ترش",
+      "description": "تکه‌های گوشت مزه‌دارشده با گردو و انار، کباب‌شده روی آتش.",
+      "ingredients": "گوشت گوساله، گردو، رب انار، سبزی معطر، برنج",
+      "price": 485000,
+      "allergens": [
+        "گردو"
+      ],
+      "icon": "kebab"
+    },
+    {
+      "id": 7,
+      "category": "grilled",
+      "name": "ماهی کبابی با نارنج",
+      "description": "فیلهٔ ماهی کبابی با چاشنی نارنج و برنج شوید.",
+      "ingredients": "ماهی قزل‌آلا، نارنج، روغن زیتون، شوید، برنج",
+      "price": 425000,
+      "allergens": [
+        "ماهی"
+      ],
+      "icon": "plate"
+    },
+    {
+      "id": 8,
+      "category": "refreshments",
+      "name": "شربت بهارنارنج",
+      "description": "نوشیدنی خنک با رایحهٔ آرام و دل‌نشین بهارنارنج.",
+      "ingredients": "عرق بهارنارنج، آب، شکر، آب لیمو",
+      "price": 70000,
+      "allergens": null,
+      "icon": "glass"
+    },
+    {
+      "id": 9,
+      "category": "refreshments",
+      "name": "چای ایرانی",
+      "description": "چای تازه‌دم لاهیجان؛ ساده، گرم و خوش‌عطر.",
+      "ingredients": "چای سیاه ایرانی، آب",
+      "price": 40000,
+      "allergens": null,
+      "icon": "glass"
+    },
+    {
+      "id": 10,
+      "category": "sweets",
+      "name": "رشته‌خشکار",
+      "description": "شیرینی گیلانی با مغز گردو و عطر هل و دارچین.",
+      "ingredients": "آرد برنج، آرد گندم، گردو، شکر، هل، دارچین",
+      "price": 95000,
+      "allergens": [
+        "گندم (گلوتن)",
+        "گردو"
+      ],
+      "icon": "cake"
+    }
+  ]
+}

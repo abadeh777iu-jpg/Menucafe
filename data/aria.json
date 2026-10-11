@@ -1,0 +1,185 @@
+{
+  "restaurant": {
+    "name": "رستوران آریا",
+    "description": "از عطر زعفران تا طعم آشنای خانه؛ به سفرهٔ آریا خوش آمدید.",
+    "id": "aria",
+    "slug": "aria",
+    "mark": "آ",
+    "englishName": "ARIA RESTAURANT",
+    "headline": "طعم اصیل، حالِ خوب.",
+    "note": "یک مکث خوش‌طعم، در شلوغی روز",
+    "footer": "آریا؛ به طعم خاطره‌ها",
+    "theme": "summer"
+  },
+  "categories": [
+    {
+      "id": "starters",
+      "name": "پیش‌غذا",
+      "icon": "bowl"
+    },
+    {
+      "id": "mains",
+      "name": "غذاهای اصلی",
+      "icon": "plate"
+    },
+    {
+      "id": "iranian",
+      "name": "غذاهای ایرانی",
+      "icon": "rice"
+    },
+    {
+      "id": "drinks",
+      "name": "نوشیدنی‌ها",
+      "icon": "glass"
+    },
+    {
+      "id": "desserts",
+      "name": "دسرها",
+      "icon": "cake"
+    }
+  ],
+  "items": [
+    {
+      "id": 1,
+      "category": "starters",
+      "name": "کشک بادمجان",
+      "description": "بادمجان کبابی با کشک نرم و عطر دل‌نشین نعناع‌داغ.",
+      "ingredients": "بادمجان، کشک، گردو، پیاز، نعناع",
+      "price": 145000,
+      "allergens": [
+        "شیر",
+        "گردو"
+      ],
+      "icon": "bowl",
+      "label": "طعم آشنا"
+    },
+    {
+      "id": 2,
+      "category": "starters",
+      "name": "سالاد فصل",
+      "description": "ترکیبی ترد و تازه، با چاشنی سبک لیمو و روغن زیتون.",
+      "ingredients": "کاهو، خیار، گوجه‌فرنگی، هویج، لیمو",
+      "price": 95000,
+      "allergens": null,
+      "icon": "leaf"
+    },
+    {
+      "id": 3,
+      "category": "mains",
+      "name": "پاستا آلفردو",
+      "description": "پاستای گرم در سس خامه‌ای، همراه مرغ و قارچ تفت‌داده.",
+      "ingredients": "پاستا، مرغ، قارچ، خامه، پنیر پارمزان",
+      "price": 285000,
+      "allergens": [
+        "گندم (گلوتن)",
+        "شیر"
+      ],
+      "icon": "plate"
+    },
+    {
+      "id": 4,
+      "category": "mains",
+      "name": "مرغ گریل با سبزیجات",
+      "description": "فیلهٔ مرغ گریل‌شده با سبزیجات رنگارنگ و عطر رزماری.",
+      "ingredients": "فیلهٔ مرغ، هویج، کدو، فلفل دلمه‌ای، رزماری",
+      "price": 310000,
+      "allergens": null,
+      "icon": "plate"
+    },
+    {
+      "id": 5,
+      "category": "iranian",
+      "name": "چلوکباب کوبیده",
+      "description": "دو سیخ کوبیدهٔ آبدار، کنار برنج زعفرانی و گوجهٔ کبابی.",
+      "ingredients": "گوشت گوساله و گوسفند، پیاز، برنج، زعفران، کره",
+      "price": 365000,
+      "allergens": [
+        "شیر"
+      ],
+      "icon": "kebab",
+      "label": "پیشنهاد آریا"
+    },
+    {
+      "id": 6,
+      "category": "iranian",
+      "name": "زرشک‌پلو با مرغ",
+      "description": "برنج خوش‌عطر ایرانی با زرشک ملس و مرغ زعفرانی.",
+      "ingredients": "برنج، مرغ، زرشک، زعفران، کره",
+      "price": 295000,
+      "allergens": [
+        "شیر"
+      ],
+      "icon": "rice"
+    },
+    {
+      "id": 7,
+      "category": "iranian",
+      "name": "خورش قورمه‌سبزی",
+      "description": "خورشی جاافتاده با سبزی معطر و طعم لطیف لیموعمانی.",
+      "ingredients": "گوشت گوساله، سبزی خورش، لوبیا قرمز، لیموعمانی، برنج",
+      "price": 275000,
+      "allergens": null,
+      "icon": "bowl"
+    },
+    {
+      "id": 8,
+      "category": "iranian",
+      "name": "باقالی‌پلو با ماهیچه",
+      "description": "ماهیچهٔ آرام‌پز در کنار برنج شوید و باقالی تازه.",
+      "ingredients": "ماهیچهٔ گوسفندی، برنج، باقالی، شوید، کره",
+      "price": 590000,
+      "allergens": [
+        "شیر"
+      ],
+      "icon": "rice"
+    },
+    {
+      "id": 9,
+      "category": "drinks",
+      "name": "دوغ نعناع",
+      "description": "خنک و سبک، با عطر نعناع؛ همراه همیشگی غذای ایرانی.",
+      "ingredients": "ماست، آب، نمک، نعناع",
+      "price": 45000,
+      "allergens": [
+        "شیر"
+      ],
+      "icon": "glass"
+    },
+    {
+      "id": 10,
+      "category": "drinks",
+      "name": "شربت زعفران و گلاب",
+      "description": "رنگ طلایی زعفران و رایحهٔ گلاب در یک نوشیدنی خنک.",
+      "ingredients": "آب، زعفران، گلاب، شکر، لیمو",
+      "price": 65000,
+      "allergens": null,
+      "icon": "glass"
+    },
+    {
+      "id": 11,
+      "category": "desserts",
+      "name": "بستنی سنتی زعفرانی",
+      "description": "یک پایان شیرین با زعفران، تکه‌های خامه و خلال پسته.",
+      "ingredients": "شیر، خامه، شکر، زعفران، گلاب، پسته",
+      "price": 110000,
+      "allergens": [
+        "شیر",
+        "پسته"
+      ],
+      "icon": "icecream",
+      "label": "شیرین و خاطره‌انگیز"
+    },
+    {
+      "id": 12,
+      "category": "desserts",
+      "name": "شله‌زرد",
+      "description": "دسر لطیف زعفرانی با نقش دارچین و خلال بادام.",
+      "ingredients": "برنج، شکر، زعفران، گلاب، دارچین، بادام",
+      "price": 85000,
+      "allergens": [
+        "بادام"
+      ],
+      "icon": "bowl"
+    }
+  ]
+}

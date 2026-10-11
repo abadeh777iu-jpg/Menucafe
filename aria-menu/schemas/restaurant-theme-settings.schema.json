@@ -1,0 +1,48 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "Future restaurant theme settings contract — not implemented persistence",
+  "description": "Design contract for a later authorized server API. This stage has no scheduler, admin panel or server-side theme writes.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "restaurantId", "timezone", "baseThemeId", "manualOverride", "schedules", "customOccasions"],
+  "properties": {
+    "schemaVersion": {"const": 1},
+    "restaurantId": {"type": "string", "minLength": 1},
+    "timezone": {"const": "Asia/Tehran"},
+    "baseThemeId": {"type": "string", "minLength": 1},
+    "manualOverride": {
+      "type": "object", "additionalProperties": false,
+      "required": ["enabled", "themeId", "effectsEnabled"],
+      "properties": {"enabled": {"type": "boolean"}, "themeId": {"type": "string", "minLength": 1}, "effectsEnabled": {"type": "boolean"}}
+    },
+    "schedules": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "themeId", "enabled", "startsAt", "endsAt", "effectsEnabled"],
+        "properties": {
+          "id": {"type": "string", "minLength": 1},
+          "themeId": {"type": "string", "minLength": 1},
+          "enabled": {"type": "boolean"},
+          "startsAt": {"type": "string", "format": "date-time", "description": "UTC instant converted from editable Asia/Tehran date/time."},
+          "endsAt": {"type": "string", "format": "date-time", "description": "Exclusive UTC end. Server must enforce end > start and check overlaps."},
+          "effectsEnabled": {"type": "boolean"}
+        }
+      }
+    },
+    "customOccasions": {
+      "type": "array",
+      "items": {
+        "type": "object", "additionalProperties": false,
+        "required": ["id", "title", "visualPresetId", "message"],
+        "properties": {
+          "id": {"type": "string", "pattern": "^custom-[a-z0-9-]+$"},
+          "title": {"type": "string", "minLength": 1, "maxLength": 80},
+          "message": {"type": "string", "maxLength": 200},
+          "visualPresetId": {"type": "string", "description": "Server-validated local registry ID, never arbitrary HTML, CSS or JS."},
+          "accentColor": {"type": "string", "pattern": "^#[0-9a-fA-F]{6}$"}
+        }
+      }
+    }
+  }
+}

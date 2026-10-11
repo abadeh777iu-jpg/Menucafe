@@ -1,0 +1,68 @@
+[
+  {
+    "width": 320,
+    "slug": "aria",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 320,
+    "slug": "bahar",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 375,
+    "slug": "aria",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 375,
+    "slug": "bahar",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 390,
+    "slug": "aria",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 390,
+    "slug": "bahar",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 768,
+    "slug": "aria",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 768,
+    "slug": "bahar",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "slug": "aria",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "width": 1280,
+    "slug": "bahar",
+    "themes": 5,
+    "passed": true
+  },
+  {
+    "persistence": "refresh, independent restaurant keys, default restore, invalid value fallback: passed"
+  },
+  {
+    "sandboxPreview": "theme changes and restaurant isolation without localStorage: passed"
+  }
+]
