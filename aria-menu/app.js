@@ -33,7 +33,7 @@ async function init(){const version=++loadVersion;try{
  const loaded=await window.MenuRepository.getMenu(slug);
  if(version!==loadVersion)return;
  menu=loaded; menu.categories=(menu.categories||[]).filter(c=>c.enabled!==false); const enabledIds=new Set(menu.categories.map(c=>c.id)); menu.items=(menu.items||[]).filter(i=>i.visible!==false&&enabledIds.has(i.category)); active='all';query='';
- window.MenuThemes.mount(menu.restaurant);
+ window.MenuThemes.mount(menu.restaurant, slug);
  
  document.querySelector('#search').value='';
  document.title=`منوی ${menu.restaurant.name} | نسخهٔ نمایشی`;

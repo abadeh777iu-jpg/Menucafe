@@ -1,6 +1,8 @@
-/* Restaurant theme. The theme is chosen by the restaurant owner in the admin panel and
-   delivered with the menu (menu.restaurant.theme). Customers cannot change it here.
-   Motion follows the device's reduced-motion setting automatically. */
+/* Restaurant theme. The owner's theme (scheduled or manual) is delivered with the menu
+   (menu.restaurant.theme). A visitor may also choose a theme in the picker under the menu.
+   That choice is saved only in this browser, per restaurant (digital-menu:theme:v1:<slug>),
+   and overrides the owner's theme until the visitor picks "خودکار". Nothing is sent to the server.
+   The owner's preview page never shows the picker. Motion follows the device's reduced-motion setting. */
 (() => {
   'use strict';
   const definitions = [
@@ -15,6 +17,28 @@
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
   let activeTheme = 'default';
   let defaultArt = '';
+  let ownerTheme = 'default';
+  let visitorChoice = '';
+  let currentSlug = '';
+  // Used only when the browser refuses localStorage (for example inside a blocked iframe).
+  const memoryChoices = new Map();
+  const storageKey = slug => `digital-menu:theme:v1:${slug}`;
+  function readChoice(slug) {
+    try {
+      return window.localStorage.getItem(storageKey(slug)) || '';
+    } catch (error) {
+      return memoryChoices.get(storageKey(slug)) || '';
+    }
+  }
+  function writeChoice(slug, value) {
+    memoryChoices.set(storageKey(slug), value);
+    try {
+      if (value) window.localStorage.setItem(storageKey(slug), value);
+      else window.localStorage.removeItem(storageKey(slug));
+    } catch (error) {
+      // Memory only: the choice lasts for this page view.
+    }
+  }
   const svg = inner => `<svg class="hero-art seasonal-art" viewBox="0 0 240 205" fill="none" aria-hidden="true" focusable="false">
     <path d="M41 187V84a79 79 0 0 1 158 0v103" fill="var(--theme-soft)"/>
     <path d="M53 187V85a67 67 0 0 1 134 0v102" stroke="var(--theme-outline)"/>
@@ -67,11 +91,57 @@
     document.dispatchEvent(new Event('menu:theme-updated'));
   }
   reducedMotion.addEventListener('change', updateEffects);
+  function picker() {
+    return document.querySelector('#theme-picker');
+  }
+  function updatePicker() {
+    const note = document.querySelector('#theme-picker-note');
+    document.querySelectorAll('[data-theme-choice]').forEach(button => {
+      button.setAttribute('aria-pressed', String(button.dataset.themeChoice === visitorChoice));
+    });
+    note.textContent = visitorChoice
+      ? 'این انتخاب فقط در همین مرورگر ذخیره می‌شود. برای برگشت به تم رستوران، «خودکار» را بزنید.'
+      : 'تم رستوران به‌صورت خودکار نمایش داده می‌شود.';
+  }
+  function renderPicker() {
+    const box = document.querySelector('#theme-choices');
+    const choices = [{id: '', name: 'خودکار (تم رستوران)', symbol: '↻'}, ...definitions];
+    box.replaceChildren(...choices.map(choice => {
+      const button = document.createElement('button');
+      button.type = 'button';
+      button.className = 'tab theme-option';
+      button.dataset.themeChoice = choice.id;
+      const symbol = document.createElement('span');
+      symbol.setAttribute('aria-hidden', 'true');
+      symbol.textContent = choice.symbol;
+      button.append(symbol, document.createTextNode(` ${choice.name}`));
+      button.addEventListener('click', () => chooseTheme(choice.id));
+      return button;
+    }));
+    picker().hidden = false;
+    updatePicker();
+  }
+  function chooseTheme(id) {
+    visitorChoice = valid.has(id) ? id : '';
+    if (currentSlug) writeChoice(currentSlug, visitorChoice);
+    apply(visitorChoice || ownerTheme);
+    updatePicker();
+  }
   window.MenuThemes = {
-    mount(restaurant) {
+    mount(restaurant, slug = '') {
       if (!defaultArt) defaultArt = document.querySelector('.hero-art').outerHTML;
-      const chosen = valid.has(previewTheme) ? previewTheme : restaurant.theme;
-      apply(valid.has(chosen) ? chosen : 'default');
+      ownerTheme = valid.has(restaurant.theme) ? restaurant.theme : 'default';
+      currentSlug = slug;
+      if (valid.has(previewTheme)) {
+        // Owner's preview: show exactly the requested theme and no visitor controls.
+        picker().hidden = true;
+        apply(previewTheme);
+        return;
+      }
+      visitorChoice = slug ? readChoice(slug) : '';
+      if (!valid.has(visitorChoice)) visitorChoice = '';
+      apply(visitorChoice || ownerTheme);
+      renderPicker();
     }
   };
 })();
