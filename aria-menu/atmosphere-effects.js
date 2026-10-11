@@ -76,21 +76,14 @@
   if(valid){root.dataset.atmosphere=selected;if(selected!==mode){mode=selected;dirty=true;quality=1;time=0;}}
   else delete root.dataset.atmosphere;
   root.dataset.pageVisible=String(!document.hidden);
-  const controls=document.querySelector('#atmosphere-controls');controls.hidden=!valid;
-  if(valid){
-   const lab=document.querySelector('.theme-lab'),main=document.querySelector('main');if(main.lastElementChild!==lab)main.append(lab);
-   const label={summer:'نسیم و نورِ تابستان',valentine:'گلبرگ و نورِ گرم',halloween:'مه و فانوس‌های روشن'}[selected];document.querySelector('#atmosphere-caption').textContent=label;
+    if(valid){
   }
   document.querySelectorAll('[data-live-choice]').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.liveChoice===selected)));
-  const button=document.querySelector('#atmosphere-motion');button.textContent=active()?'توقف جلوه‌ها':'روشن‌کردن جلوه‌ها';button.setAttribute('aria-pressed',String(active()));button.disabled=matchMedia('(prefers-reduced-motion: reduce)').matches;
-  canvas.hidden=!active();
+    canvas.hidden=!active();
   if(active()&&!document.hidden){if(!running){running=true;last=0;raf=requestAnimationFrame(tick)}}else{stop();if(!active()&&ctx)ctx.clearRect(0,0,width,height)}
   cards();
  }
  document.addEventListener('menu:theme-updated',sync);document.addEventListener('menu:rendered',cards);document.addEventListener('visibilitychange',sync);
  window.addEventListener('pagehide',()=>{stop();observer?.disconnect();for(const a of cardAnimations)a.cancel();cardAnimations.clear()});window.addEventListener('pageshow',sync);window.addEventListener('resize',()=>{dirty=true},{passive:true});
- document.querySelector('#atmosphere-motion').onclick=()=>document.querySelector('#effects-toggle').click();
- document.querySelector('#atmosphere-customize').onclick=()=>document.querySelector('.theme-lab').scrollIntoView({block:'start',behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth'});
- document.querySelector('#live-theme-shortcuts').onclick=e=>{const b=e.target.closest('[data-live-choice]');if(b)document.querySelector(`[data-theme-choice="${b.dataset.liveChoice}"]`).click()};
- window.AtmosphereEffects=Object.freeze({inspect:()=>({mode,running,frame,particles:particles.length,layers:[...new Set(particles.map(p=>p.layer))],kinds:[...new Set(particles.map(p=>p.kind))],fps,dpr,width,height,fogLayers:mode==='halloween'?2:0,meanDrawMs:draws?drawMs/draws:0,maxDrawMs,positions:particles.slice(0,5).map(p=>({x:p.x,y:p.y,angle:p.angle})),cardAnimations:cardAnimations.size})});
+    window.AtmosphereEffects=Object.freeze({inspect:()=>({mode,running,frame,particles:particles.length,layers:[...new Set(particles.map(p=>p.layer))],kinds:[...new Set(particles.map(p=>p.kind))],fps,dpr,width,height,fogLayers:mode==='halloween'?2:0,meanDrawMs:draws?drawMs/draws:0,maxDrawMs,positions:particles.slice(0,5).map(p=>({x:p.x,y:p.y,angle:p.angle})),cardAnimations:cardAnimations.size})});
 })();

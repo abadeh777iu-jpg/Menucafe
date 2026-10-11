@@ -98,8 +98,6 @@
   window.addEventListener('pagehide',()=>{stop();observer?.disconnect();for(const a of cardAnimations)a.cancel();cardAnimations.clear();});
   window.addEventListener('pageshow',sync);
   window.addEventListener('resize',()=>{resizePending=true},{passive:true});
-  document.querySelector('#winter-motion').onclick=()=>document.querySelector('#effects-toggle').click();
-  document.querySelector('#winter-customize').onclick=()=>document.querySelector('.theme-lab').scrollIntoView({behavior:matchMedia('(prefers-reduced-motion: reduce)').matches?'instant':'smooth',block:'start'});
   // Read-only diagnostics for reproducible preview checks; no control of user data.
   window.WinterEffects=Object.freeze({inspect:()=>({running,frame,particles:particles.length,fps,dpr,layers:[...new Set(particles.map(p=>p.layer))],width,height,canvasAvailable:Boolean(ctx),meanDrawMs:draws?elapsedDraw/draws:0,maxDrawMs:maxDraw,cardAnimations:cardAnimations.size,positions:particles.slice(0,3).map(p=>({x:p.x,y:p.y,speed:p.speed,radius:p.radius})),hidden:document.hidden})});
 })();

@@ -8,6 +8,7 @@ only rewrites root-absolute paths so the same files work under a sub-path.
 
 Run: python3 build_pages.py
 """
+import argparse
 import re
 import shutil
 from pathlib import Path
@@ -60,6 +61,13 @@ def build_menu_data():
 
 
 def main():
+    global OUT
+    parser = argparse.ArgumentParser(description='Build the static GitHub Pages copy.')
+    parser.add_argument('--out', help='output folder (default: repository root)')
+    args = parser.parse_args()
+    if args.out:
+        OUT = Path(args.out).resolve()
+        OUT.mkdir(parents=True, exist_ok=True)
     for name in GENERATED:
         target = OUT / name
         if target.is_dir() and not target.is_symlink():
@@ -75,7 +83,9 @@ def main():
         else:
             shutil.copy2(SRC / name, OUT / name)
     shutil.copytree(SRC / 'assets', OUT / 'assets')
-    shutil.copytree(SRC / 'data', OUT / 'data')
+    (OUT / 'data').mkdir()
+    for seed in sorted((SRC / 'data').glob('*.json')):
+        shutil.copy2(seed, OUT / 'data' / seed.name)
 
     for restaurant in RESTAURANTS:
         page_dir = OUT / restaurant
