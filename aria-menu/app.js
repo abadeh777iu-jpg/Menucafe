@@ -34,7 +34,7 @@ async function init(){const version=++loadVersion;try{
  if(version!==loadVersion)return;
  menu=loaded; active='all';query='';
  window.MenuThemes.mount(menu.restaurant);
- document.querySelectorAll('.demo-links a').forEach(a=>{if(a.getAttribute('href').replace('#','')===`/${slug}`)a.setAttribute('aria-current','page');else a.removeAttribute('aria-current');});
+ 
  document.querySelector('#search').value='';
  document.title=`منوی ${menu.restaurant.name} | نسخهٔ نمایشی`;
  document.querySelector('meta[name=description]').content=`نسخهٔ نمایشی منوی ${menu.restaurant.name}؛ تمامی غذاها و قیمت‌ها آزمایشی هستند.`;

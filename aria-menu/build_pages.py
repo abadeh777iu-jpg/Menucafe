@@ -46,8 +46,6 @@ def build_page(restaurant):
     html = (SRC / 'index.html').read_text(encoding='utf-8')
     # Every root-absolute asset/link becomes relative to the restaurant folder.
     html = re.sub(r'(href|src)="/(?!/)', r'\1="../', html)
-    html = replace_once(html, 'href="../aria"', 'href="../aria/"', 'aria link')
-    html = replace_once(html, 'href="../bahar"', 'href="../bahar/"', 'bahar link')
     if '="/' in html:
         raise SystemExit('build_pages: root-absolute path left in index.html')
     guard = f"<script>window.DemoRoute={{getSlug:function(){{return '{restaurant}';}}}};</script>"
