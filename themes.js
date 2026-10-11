@@ -1,5 +1,6 @@
-/* Manual demo themes: browser-local preferences, isolated by restaurant slug.
-   No account, schedule, server write, or global restaurant setting is implied. */
+/* Restaurant theme. The theme is chosen by the restaurant owner in the admin panel and
+   delivered with the menu (menu.restaurant.theme). Customers cannot change it here.
+   Motion follows the device's reduced-motion setting automatically. */
 (() => {
   'use strict';
   const definitions = [
@@ -7,16 +8,10 @@
     ...Object.entries(window.OccasionVisuals || {}).map(([id, visual]) => ({id, name:visual.name, hint:visual.hint, symbol:visual.symbol})),
     {id:'autumn', name:'پاییز', hint:'برگ و دارچین', symbol:'❧'},
   ];
-  const valid = new Set(definitions.map(t => t.id));
-  const memory = new Map();
-  const effectMemory = new Map();
+  const valid = new Set(definitions.map(theme => theme.id));
   const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
-  let effectsEnabled = true;
   let activeTheme = 'default';
-  let previewConsumed = false;
-  const effectKey = slug => `digital-menu:effects:v1:${slug}`;
-  let currentSlug = '', restaurantName = '', defaultArt = '';
-  const key = slug => `digital-menu:theme:v1:${slug}`;
+  let defaultArt = '';
   const svg = inner => `<svg class="hero-art seasonal-art" viewBox="0 0 240 205" fill="none" aria-hidden="true" focusable="false">
     <path d="M41 187V84a79 79 0 0 1 158 0v103" fill="var(--theme-soft)"/>
     <path d="M53 187V85a67 67 0 0 1 134 0v102" stroke="var(--theme-outline)"/>
@@ -39,18 +34,9 @@
       <path d="m73 44 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="var(--theme-gold)"/>
       <circle cx="202" cy="106" r="3" fill="var(--theme-gold)"/>`)
   };
-  function read(slug) {
-    try {
-      const saved = localStorage.getItem(key(slug));
-      return valid.has(saved) ? saved : (memory.get(slug) || 'default');
-    } catch { return memory.get(slug) || 'default'; }
-  }
   function apply(id) {
     const theme = valid.has(id) ? id : 'default';
     document.documentElement.dataset.theme = theme;
-    document.querySelectorAll('[data-theme-choice]').forEach(button => {
-      button.setAttribute('aria-pressed', String(button.dataset.themeChoice === theme));
-    });
     const art = document.querySelector('.hero-art');
     const visual = window.OccasionVisuals?.[theme];
     if (art) art.outerHTML = theme === 'default' ? defaultArt : (visual?.art || arts[theme]);
@@ -67,72 +53,16 @@
     document.querySelector('meta[name="theme-color"]').content = getComputedStyle(document.documentElement).getPropertyValue('--paper').trim();
     return theme;
   }
-  function readEffects(slug) {
-    try {
-      const stored = localStorage.getItem(effectKey(slug));
-      if (stored === 'true' || stored === 'false') return stored === 'true';
-    } catch { /* Preferences remain usable inside a sandboxed preview. */ }
-    return effectMemory.get(slug) ?? true;
-  }
   function updateEffects() {
     const supported = Boolean(window.OccasionVisuals?.[activeTheme]?.motion);
-    document.documentElement.dataset.effects = effectsEnabled && supported && !reducedMotion.matches ? 'on' : 'off';
-    const control = document.querySelector('#effects-toggle');
-    control.checked = effectsEnabled;
-    control.disabled = !supported;
-    document.querySelector('#effects-note').textContent = !supported
-      ? 'این تم جلوهٔ متحرک ندارد.'
-      : reducedMotion.matches ? 'حرکت مطابق تنظیم کاهش حرکت دستگاه خاموش است.'
-      : effectsEnabled ? (activeTheme === 'winter' ? 'برف پشت محتوا می‌بارد؛ حرکت کارت‌ها نرم و کوتاه است.' : ['summer','valentine','halloween'].includes(activeTheme) ? 'جلوه‌ها پشت محتوا اجرا می‌شوند؛ متن و قیمت‌ها همیشه خوانا هستند.' : 'حرکت فقط داخل قاب تصویر؛ متن منو همیشه ثابت است.') : 'جلوه‌ها خاموش‌اند؛ تزئینات ثابت باقی می‌مانند.';
+    document.documentElement.dataset.effects = supported && !reducedMotion.matches ? 'on' : 'off';
     document.dispatchEvent(new Event('menu:theme-updated'));
   }
-  reducedMotion.addEventListener('change', () => { if(currentSlug)updateEffects(); });
-  function select(id) {
-    if (!currentSlug || !valid.has(id)) return;
-    const liveThemes = ['winter','summer','valentine','halloween'];
-    const layoutChanged = liveThemes.includes(activeTheme) || liveThemes.includes(id);
-    apply(id);
-    if(layoutChanged)document.querySelector('.hero').scrollIntoView({block:'start',behavior:reducedMotion.matches?'instant':'smooth'});
-    try { const url=new URL(location.href); if(url.searchParams.has('theme')) {url.searchParams.set('theme',id);history.replaceState(null,'',url);} } catch {}
-    memory.set(currentSlug, id);
-    let saved = false;
-    try { localStorage.setItem(key(currentSlug), id); saved = true; } catch { /* Opaque iframe / disabled storage. */ }
-    const name = definitions.find(theme => theme.id === id).name;
-    document.querySelector('#theme-status').textContent = saved
-      ? `تم «${name}» برای ${restaurantName} در این مرورگر ذخیره شد.`
-      : `تم «${name}» برای ${restaurantName} فعال شد؛ ذخیره‌سازی مرورگر در دسترس نیست و انتخاب فقط تا بسته‌شدن این صفحه می‌ماند.`;
-  }
+  reducedMotion.addEventListener('change', updateEffects);
   window.MenuThemes = {
     mount(restaurant) {
       if (!defaultArt) defaultArt = document.querySelector('.hero-art').outerHTML;
-      currentSlug = restaurant.slug;
-      restaurantName = restaurant.name;
-      effectsEnabled = readEffects(currentSlug);
-      document.querySelector('#theme-options').innerHTML = definitions.map(theme => `
-        <button type="button" class="theme-choice" data-theme-choice="${theme.id}" aria-pressed="false" aria-label="تم ${theme.name}">
-          <span class="theme-symbol" aria-hidden="true">${theme.symbol}</span>
-          <span class="theme-choice-text"><strong>${theme.name}</strong><small>${theme.hint}</small></span>
-          <span class="theme-tick" aria-hidden="true">✓</span>
-        </button>`).join('');
-      document.querySelector('#theme-options').onclick = event => {
-        const button = event.target.closest('[data-theme-choice]');
-        if (button) select(button.dataset.themeChoice);
-      };
-      document.querySelector('#effects-toggle').onchange = event => {
-        effectsEnabled = event.target.checked;
-        effectMemory.set(currentSlug, effectsEnabled);
-        let saved = false;
-        try { localStorage.setItem(effectKey(currentSlug), String(effectsEnabled)); saved = true; } catch {}
-        updateEffects();
-        document.querySelector('#theme-status').textContent = saved
-          ? `تنظیم جلوه‌ها برای ${restaurantName} در این مرورگر ذخیره شد.`
-          : `تنظیم جلوه‌ها فقط تا بسته‌شدن این صفحه حفظ می‌شود؛ ذخیره‌سازی مرورگر در دسترس نیست.`;
-      };
-      document.querySelector('#theme-preview').onclick = () => document.querySelector('.hero').scrollIntoView({block:'start', behavior:reducedMotion.matches ? 'instant' : 'smooth'});
-      const requested = !previewConsumed && (new URLSearchParams(location.search).get('theme') || window.DemoRoute?.initialTheme);
-      previewConsumed = true;
-      apply(valid.has(requested) ? requested : read(currentSlug));
-      document.querySelector('#theme-status').textContent = `انتخاب مستقل برای ${restaurantName}؛ فقط در همین مرورگر، نه برای سایر بازدیدکنندگان.`;
+      apply(valid.has(restaurant.theme) ? restaurant.theme : 'default');
     }
   };
 })();
