@@ -1,0 +1,103 @@
+/* New art directions only. Winter CSS and renderer remain unmodified. */
+:root[data-theme="summer"][data-theme]{--paper:#e8f2ed;--card-bg:#fffdf4;--ink:#164d4e;--muted:#526e64;--line:#b9d3c6;--green:#247c7d;--orange:#91651e;--theme-soft:#deece1;--theme-outline:#9cbfae;--theme-body:#385d56;--theme-secondary:#597365;--theme-alert:#746031;--atmos-panel:#f8f8e9;--atmos-accent:#e1bf66;--atmos-caption:#d9eae4;color-scheme:light}
+:root[data-theme="valentine"][data-theme]{--paper:#271924;--card-bg:#382330;--ink:#f6e9e6;--muted:#d4bfc5;--line:#62434e;--green:#965167;--orange:#e1b59d;--theme-soft:#4c2e3e;--theme-outline:#956d74;--theme-body:#e3cdd1;--theme-secondary:#cfb9c3;--theme-alert:#e0baa2;--atmos-panel:#311f2c;--atmos-accent:#ba8b7c;--atmos-caption:#352330;color-scheme:dark}
+:root[data-theme="halloween"][data-theme]{--paper:#181622;--card-bg:#292333;--ink:#f4e8d5;--muted:#c4b6c6;--line:#514151;--green:#875636;--orange:#e6b477;--theme-soft:#3a2c40;--theme-outline:#846473;--theme-body:#d8ccd7;--theme-secondary:#bfb0c6;--theme-alert:#ddbc92;--atmos-panel:#221d2c;--atmos-accent:#bd8e58;--atmos-caption:#261e2f;color-scheme:dark}
+#atmosphere-canvas{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;user-select:none;contain:strict}
+:root[data-atmosphere] body{isolation:isolate;background-color:var(--paper);background-attachment:fixed}
+:root[data-atmosphere="summer"] body{background-image:radial-gradient(ellipse at 5% 3%,#f9e7b080,transparent 48%),radial-gradient(ellipse at 99% 1%,#76c7c740,transparent 52%)}
+:root[data-atmosphere="valentine"] body{background-image:radial-gradient(ellipse at 12% 12%,#84526140,transparent 49%),radial-gradient(ellipse at 93% 8%,#956b4b22,transparent 42%)}
+:root[data-atmosphere="halloween"] body{background-image:radial-gradient(ellipse at 12% 5%,#69477644,transparent 48%),radial-gradient(ellipse at 90% 24%,#ad73301c,transparent 39%)}
+:root[data-atmosphere] :is(header,main,footer,#occasion-banner){position:relative;z-index:1}
+:root[data-atmosphere] header{background:var(--atmos-panel);border-top:4px solid var(--atmos-accent)}
+:root[data-atmosphere] .occasion-banner{background:var(--atmos-caption);color:var(--muted);padding:8px 16px;font-size:10px;border-bottom:1px solid var(--line)}
+:root[data-atmosphere] .hero{padding:25px 0 18px;gap:30px;min-height:0;align-items:center}
+:root[data-atmosphere] .hero-art{width:50%;height:auto;margin:0;opacity:1}
+:root[data-atmosphere] .hero-text{min-width:0;flex:1;padding:26px;background:var(--atmos-panel);border:1px solid var(--line)}
+:root[data-atmosphere] .hero .eyebrow{display:none}
+:root[data-atmosphere] .occasion-intro>span{font-size:10px;letter-spacing:1px;color:var(--orange)}
+:root[data-atmosphere] .occasion-intro h2{font-size:36px;line-height:1.8;font-weight:550;letter-spacing:-.7px;margin:12px 0;color:var(--ink)}
+:root[data-atmosphere] .occasion-intro p{font-size:12px;line-height:2.2;color:var(--muted)}
+:root[data-atmosphere] .hero h1{font-size:17px;font-weight:500;margin:21px 0 7px;letter-spacing:0;color:var(--orange)}
+:root[data-atmosphere] .hero #hero-description{font-size:12px;color:var(--theme-body)}
+:root[data-atmosphere] .hero-note{font-size:10px;margin-top:12px}
+:root[data-atmosphere] .hero-art figcaption{background:var(--atmos-caption);border:1px solid var(--line);border-radius:25px;padding:8px 12px;margin:4px 24px;color:var(--muted);font-size:10px}
+:root[data-atmosphere][data-theme] .navigation{background:var(--atmos-panel);border-top:1px solid var(--theme-outline);border-bottom:1px solid var(--theme-outline)}
+:root[data-atmosphere][data-theme] .search{background:var(--card-bg);color:var(--muted);border-color:var(--theme-outline)}
+:root[data-atmosphere][data-theme] .tab{color:var(--theme-body)}
+:root[data-atmosphere][data-theme] .tab[aria-pressed="true"]{background:var(--green);color:#fff}
+:root[data-atmosphere] .menu-intro{background:var(--atmos-panel);padding:19px 13px 13px;border-radius:0 0 10px 10px;margin-bottom:17px}
+:root[data-atmosphere] .section-head{background:var(--atmos-panel);padding:10px 12px;border-radius:8px;border:1px solid var(--line)}
+:root[data-atmosphere] .section-head h2{font-size:21px;font-weight:550}
+:root[data-atmosphere][data-theme] .card{background:var(--card-bg);padding:24px;border-color:var(--line)}
+:root[data-atmosphere][data-theme] .card h3{color:var(--ink)}
+:root[data-atmosphere][data-theme] .description{color:var(--theme-body)}
+:root[data-atmosphere][data-theme] .ingredients,:root[data-atmosphere][data-theme] .price small{color:var(--theme-secondary)}
+:root[data-atmosphere][data-theme] .price{color:var(--orange)}
+:root[data-atmosphere][data-theme] .card-bottom{border-top:1px solid var(--line)}
+:root[data-atmosphere][data-theme] .food-icon{background:var(--theme-soft);color:var(--orange);border-color:var(--theme-outline)}
+:root[data-atmosphere] .theme-lab{background:var(--atmos-panel);margin-top:15px;margin-bottom:35px}
+:root[data-atmosphere] .notice,:root[data-atmosphere] .empty{background:var(--atmos-panel)}
+:root[data-atmosphere] footer{background:var(--atmos-panel);border-top:3px double var(--theme-outline)}
+/* Summer is open, bright and rounded, with sea-green ceramics and a sand edge. */
+:root[data-atmosphere="summer"] .hero-text{border-radius:3px 38px 3px 38px;box-shadow:0 5px 0 #ccdfcd}
+:root[data-atmosphere="summer"] .brand-mark{border-radius:50% 50% 8px 8px;background:#327b72;color:#fff7d6;border-bottom:3px solid #d6bb70}
+:root[data-atmosphere="summer"] .card{border-radius:19px 19px 7px 7px;border-top:3px solid #77ad99;box-shadow:0 4px 0 #d2e2d5}
+:root[data-atmosphere="summer"] .food-icon{border-radius:50% 50% 9px 9px}
+:root[data-atmosphere="summer"] .section-head{border-radius:30px 8px 8px 30px}
+/* Valentine is an intimate evening salon, not a page of giant hearts. */
+:root[data-atmosphere="valentine"] .hero{flex-direction:row-reverse}
+:root[data-atmosphere="valentine"] .hero-text{border-radius:70px 70px 5px 5px;text-align:center;padding-top:33px;border-color:#8d6a69;box-shadow:inset 0 0 0 5px #311f2c,inset 0 0 0 6px #62454b}
+:root[data-atmosphere="valentine"] .hero-note{justify-content:center}
+:root[data-atmosphere="valentine"] .brand-mark{border-radius:22px 22px 3px 3px;background:#713a50;color:#f1d3c6;border:1px solid #c39783}
+:root[data-atmosphere="valentine"] .card{border-radius:4px 22px 4px 22px;box-shadow:inset 0 0 0 4px #382330,inset 0 0 0 5px #573b49}
+:root[data-atmosphere="valentine"] .food-icon{border-radius:50%}
+:root[data-atmosphere="valentine"] .section-head{border-radius:3px;border-left:2px solid #aa8079;border-right:2px solid #aa8079}
+/* Halloween: a moonlit courtyard, quiet brass lanterns and cut corner panels. */
+:root[data-atmosphere="halloween"] .hero-text{border-radius:4px 35px 4px 4px;border-left:3px solid #a27b54}
+:root[data-atmosphere="halloween"] .brand-mark{border-radius:6px;border:1px solid #c6a372;outline:1px solid #594552;outline-offset:3px;background:#593c36}
+:root[data-atmosphere="halloween"] .card{border-radius:3px 19px 3px 19px;border-top:2px solid #a68059;box-shadow:0 6px 22px #08071122}
+:root[data-atmosphere="halloween"] .food-icon{border-radius:23px 23px 3px 3px}
+:root[data-atmosphere="halloween"] .section-head{border-radius:3px;border-top:2px solid #76617d}
+#atmosphere-controls{background:var(--atmos-panel);border:1px solid var(--line);border-radius:9px;padding:13px 16px;margin-top:4px;margin-bottom:22px}
+.atmosphere-toolbar{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:10px}
+#atmosphere-caption{font-size:11px;color:var(--muted)}
+.atmosphere-actions{display:flex;gap:6px}
+.atmosphere-actions button{font-size:10px;min-height:44px;background:var(--theme-soft);border:1px solid var(--theme-outline);color:var(--ink);padding:7px 12px;border-radius:6px}
+.atmosphere-actions button:disabled{opacity:.5;cursor:not-allowed}
+#live-theme-shortcuts{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px}
+#live-theme-shortcuts button{min-height:44px;font-size:11px;color:var(--ink);background:var(--card-bg);border:1px solid var(--line);border-radius:7px;padding:8px}
+#live-theme-shortcuts button[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange)}
+#live-theme-shortcuts button:hover{border-color:var(--orange)}
+.theme-options{grid-template-columns:repeat(4,minmax(0,1fr))}
+[data-theme-choice="summer"] .theme-symbol{background:#ddedd9;color:#3a8275}
+[data-theme-choice="halloween"] .theme-symbol{background:#3a2b46;color:#e1b06d}
+@keyframes summer-palm-sway{0%,100%{transform:rotate(-1.3deg)}50%{transform:rotate(2.2deg)}}
+@keyframes summer-waves-drift{0%,100%{transform:translateX(-8px)}50%{transform:translateX(8px)}}
+@keyframes atmos-soft-glow{0%,100%{opacity:.65}50%{opacity:1}}
+@keyframes atmos-flame{0%,100%{transform:scaleX(.94);opacity:.78}50%{transform:scaleX(1.06);opacity:1}}
+@keyframes halloween-branch-sway{0%,100%{transform:rotate(-.7deg)}50%{transform:rotate(1deg)}}
+.atmos-flame{transform-box:fill-box;transform-origin:bottom center}
+:root[data-atmosphere][data-effects="on"] .summer-palm{animation:summer-palm-sway 9s ease-in-out infinite}
+:root[data-atmosphere][data-effects="on"] .summer-waves{animation:summer-waves-drift 8s ease-in-out infinite}
+:root[data-atmosphere][data-effects="on"] :is(.summer-sun,.valentine-lights,.halloween-moon,.halloween-lantern){animation:atmos-soft-glow 7s ease-in-out infinite}
+:root[data-atmosphere][data-effects="on"] .atmos-flame{animation:atmos-flame 5s ease-in-out infinite}
+:root[data-atmosphere][data-effects="on"] .halloween-branch{animation:halloween-branch-sway 11s ease-in-out infinite}
+:root[data-atmosphere][data-page-visible="false"] .atmos-motion{animation-play-state:paused}
+@media(prefers-reduced-motion:reduce){.atmos-motion{animation:none!important}}
+@media(max-width:900px) and (min-width:601px){:root[data-atmosphere] .hero{gap:18px}:root[data-atmosphere] .hero-text{padding:20px}:root[data-atmosphere] .occasion-intro h2{font-size:27px}.theme-options{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:600px){
+ :root[data-atmosphere] .hero,:root[data-atmosphere="valentine"] .hero{flex-direction:column;gap:7px;padding:19px 0 10px;align-items:stretch}
+ :root[data-atmosphere] .hero-text{padding:22px 19px 18px}:root[data-atmosphere="valentine"] .hero-text{padding-top:30px}
+ :root[data-atmosphere] .hero-art{width:100%;height:auto;margin:0}
+ :root[data-atmosphere] .occasion-intro h2{font-size:26px;line-height:1.75;letter-spacing:-.6px}
+ :root[data-atmosphere] .occasion-intro p,:root[data-atmosphere] .hero #hero-description{font-size:11px}
+ :root[data-atmosphere] .hero h1{font-size:15px;margin:16px 0 6px}
+ :root[data-atmosphere] .hero-note{font-size:9px}
+ :root[data-atmosphere] .hero-art figcaption{font-size:9px;margin:0 5px}
+ :root[data-atmosphere] .card{padding:21px}
+ :root[data-atmosphere] .section-head h2{font-size:19px}
+ :root[data-atmosphere] .menu-intro{padding:16px 10px 12px}
+ .theme-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+ #atmosphere-controls{padding:11px 12px}.atmosphere-toolbar{flex-wrap:wrap;gap:8px}.atmosphere-actions{width:100%}.atmosphere-actions button{flex:1}
+ #live-theme-shortcuts{grid-template-columns:repeat(2,minmax(0,1fr))}#live-theme-shortcuts button{font-size:10px}
+}

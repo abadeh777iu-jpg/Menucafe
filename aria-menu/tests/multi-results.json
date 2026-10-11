@@ -1,0 +1,71 @@
+[
+  {
+    "slug": "aria",
+    "width": 320,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "bahar",
+    "width": 320,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "aria",
+    "width": 375,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "bahar",
+    "width": 375,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "aria",
+    "width": 390,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "bahar",
+    "width": 390,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "aria",
+    "width": 768,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "bahar",
+    "width": 768,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "aria",
+    "width": 1280,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "slug": "bahar",
+    "width": 1280,
+    "passed": true,
+    "checks": "render, RTL, no overflow, own JSON only, categories, search, reset, refresh, no external requests, no JS errors"
+  },
+  {
+    "routing": "root redirect, direct access, trailing slash, cross-links, unknown 404: passed"
+  },
+  {
+    "isolation": "actual Aria fixture edited; Bahar file and rendered data unchanged; fixture restored"
+  },
+  {
+    "portablePreview": "both hash routes and navigation: passed"
+  }
+]

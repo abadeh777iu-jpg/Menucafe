@@ -1,0 +1,32 @@
+[
+  {
+    "frames": [
+      {
+        "transform": "translateY(12px)"
+      },
+      {
+        "transform": "translateY(0)"
+      }
+    ],
+    "options": {
+      "duration": 480,
+      "delay": 0,
+      "easing": "cubic-bezier(.2,.7,.2,1)"
+    }
+  },
+  {
+    "frames": [
+      {
+        "transform": "translateY(12px)"
+      },
+      {
+        "transform": "translateY(0)"
+      }
+    ],
+    "options": {
+      "duration": 480,
+      "delay": 55,
+      "easing": "cubic-bezier(.2,.7,.2,1)"
+    }
+  }
+]

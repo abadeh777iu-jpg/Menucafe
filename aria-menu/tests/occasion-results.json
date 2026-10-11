@@ -1,0 +1,90 @@
+[
+  {
+    "width": 320,
+    "slug": "aria",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 320,
+    "slug": "bahar",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 375,
+    "slug": "aria",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 375,
+    "slug": "bahar",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 390,
+    "slug": "aria",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 390,
+    "slug": "bahar",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 768,
+    "slug": "aria",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 768,
+    "slug": "bahar",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 1280,
+    "slug": "aria",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "width": 1280,
+    "slug": "bahar",
+    "fiveThemes": true,
+    "isolatedMotion": true,
+    "noOverlap": true,
+    "searchAndCategories": true
+  },
+  {
+    "persistence": "theme AND motion independent per restaurant across refresh",
+    "accessibility": "prefers-reduced-motion and manual toggle stop all motion",
+    "defaultRestore": true
+  },
+  {
+    "offlineSandbox": "working without network or localStorage; theme and motion independent"
+  }
+]

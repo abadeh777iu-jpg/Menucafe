@@ -1,0 +1,75 @@
+/* Original defaults stay in styles.css. Themes change tokens, never menu data. */
+:root{
+ --card-bg:#fffefa;--theme-soft:#f1f2e9;--theme-outline:#d8ddce;
+ --theme-petal:#e6dfc9;--theme-gold:#b58155;--theme-leaf:#a8b69b;
+ --theme-body:#68736a;--theme-secondary:#747c73;--theme-alert:#8a7963;
+}
+:root[data-theme="nowruz"]{
+ --paper:#f3f8ef;--card-bg:#fcfff8;--ink:#234a36;--muted:#596f5c;--line:#d5e3cb;
+ --green:#2f6545;--orange:#a33f69;--theme-soft:#e5efdc;--theme-outline:#b9cfad;
+ --theme-petal:#efc8d6;--theme-gold:#ccaa50;--theme-leaf:#94b884;
+ --theme-body:#48634c;--theme-secondary:#61725b;--theme-alert:#746040;
+}
+:root[data-theme="yalda"]{
+ --paper:#211d29;--card-bg:#302736;--ink:#f6ecdd;--muted:#cec0c7;--line:#554354;
+ --green:#9c344c;--orange:#ed9aa6;--theme-soft:#3e2e40;--theme-outline:#735667;
+ --theme-petal:#95354b;--theme-gold:#d9b975;--theme-leaf:#7b906c;
+ --theme-body:#e1d1d8;--theme-secondary:#cbbbcb;--theme-alert:#dec098;
+ color-scheme:dark;
+}
+:root[data-theme="autumn"]{
+ --paper:#faf1e5;--card-bg:#fff9ef;--ink:#513c2c;--muted:#78624c;--line:#e7d5bc;
+ --green:#7e4b2c;--orange:#a34a20;--theme-soft:#f0e1c9;--theme-outline:#d6b58c;
+ --theme-petal:#d9955d;--theme-gold:#d2ae63;--theme-leaf:#aaac72;
+ --theme-body:#715841;--theme-secondary:#7e6750;--theme-alert:#805d35;
+}
+:root[data-theme="valentine"]{
+ --paper:#fcf1f3;--card-bg:#fff9fb;--ink:#583747;--muted:#7f5d6a;--line:#ecd3dc;
+ --green:#913f61;--orange:#ad426c;--theme-soft:#f6e3ea;--theme-outline:#dfb4c5;
+ --theme-petal:#e6b2c7;--theme-gold:#b98e62;--theme-leaf:#b9c4a6;
+ --theme-body:#765162;--theme-secondary:#856572;--theme-alert:#88604b;
+}
+/* All seasonal UI colors follow the selected palette; layout is unchanged. */
+:root[data-theme]:not([data-theme="default"]) .card{background:var(--card-bg)}
+:root[data-theme]:not([data-theme="default"]) .navigation{background:var(--paper)}
+:root[data-theme]:not([data-theme="default"]) :is(.search,.empty button){background:var(--card-bg)}
+:root[data-theme]:not([data-theme="default"]) .food-icon{background:var(--theme-soft);border-color:var(--theme-outline);color:var(--orange)}
+:root[data-theme]:not([data-theme="default"]) :is(.hero-note,.tab,.sample,.section-head .count,.ingredients,.price small,footer){color:var(--theme-secondary)}
+:root[data-theme]:not([data-theme="default"]) .tab[aria-pressed="true"]{color:#fff}
+:root[data-theme]:not([data-theme="default"]) .tab:hover:not([aria-pressed="true"]){background:var(--theme-soft)}
+:root[data-theme]:not([data-theme="default"]) :is(.description,.ingredients b){color:var(--theme-body)}
+:root[data-theme]:not([data-theme="default"]) .allergens{color:var(--theme-alert)}
+:root[data-theme]:not([data-theme="default"]) :is(.badge,.menu-intro span){background:var(--theme-soft);color:var(--orange)}
+:root[data-theme]:not([data-theme="default"]) .notice{background:var(--theme-soft);border-color:var(--theme-outline);color:var(--theme-body)}
+:root[data-theme]:not([data-theme="default"]) :is(.notice strong,.footer-inner strong,.demo-links a,.empty button){color:var(--ink)}
+:root[data-theme]:not([data-theme="default"]) .sample{border-color:var(--line)}
+:root[data-theme]:not([data-theme="default"]) .sample i{background:var(--orange)}
+:root[data-theme]:not([data-theme="default"]) .search{color:var(--theme-secondary)}
+:root[data-theme]:not([data-theme="default"]) .search input::placeholder{color:var(--theme-secondary);opacity:1}
+:root[data-theme]:not([data-theme="default"]) .demo-links a:is([aria-current="page"],:hover){background:var(--theme-soft)}
+:root[data-theme]:not([data-theme="default"]) .section-head:after{background:linear-gradient(to left,var(--orange),var(--line) 22%);opacity:.6}
+:is(button,input,a):focus-visible{outline-color:var(--orange)}
+/* The selector is a demo tool, outside the sticky category bar and food cards. */
+.theme-lab{margin-bottom:25px;padding:19px 21px 14px;border:1px solid var(--line);border-radius:14px;background:var(--card-bg)}
+.theme-lab-heading{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:13px}
+.theme-lab h2{font-size:14px;font-weight:600;margin:0;display:flex;gap:8px;align-items:center}
+.theme-lab h2 svg{width:19px;height:19px;color:var(--orange)}
+.theme-lab-tag{font-size:10px;color:var(--theme-secondary);border:1px solid var(--line);padding:3px 8px;border-radius:20px;white-space:nowrap}
+.theme-options{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.theme-choice{position:relative;display:flex;align-items:center;gap:9px;min-height:60px;padding:10px;border:1px solid var(--line);border-radius:10px;background:var(--paper);color:var(--ink);text-align:right;min-width:0}
+.theme-choice[aria-pressed="true"]{border-color:var(--orange);box-shadow:inset 0 0 0 1px var(--orange)}
+.theme-choice:hover{border-color:var(--orange)}
+.theme-symbol{display:grid;place-items:center;flex-shrink:0;width:30px;height:34px;border-radius:16px 16px 6px 6px;font-family:Tahoma,sans-serif;font-size:22px;background:#e5e8da;color:#526640}
+[data-theme-choice="nowruz"] .theme-symbol{background:#e3efda;color:#367447}
+[data-theme-choice="yalda"] .theme-symbol{background:#433040;color:#efb4b4}
+[data-theme-choice="autumn"] .theme-symbol{background:#f2dfbe;color:#955027}
+[data-theme-choice="valentine"] .theme-symbol{background:#f5dae5;color:#a43f66}
+.theme-choice-text{display:flex;flex-direction:column;min-width:0;gap:3px}
+.theme-choice strong{font-size:11px;font-weight:600;white-space:nowrap}
+.theme-choice small{font-size:9px;color:var(--theme-secondary);white-space:nowrap}
+.theme-tick{font-family:Tahoma,sans-serif;font-size:12px;color:var(--orange);margin-inline-start:auto;visibility:hidden}
+.theme-choice[aria-pressed="true"] .theme-tick{visibility:visible}
+.theme-status{font-size:10px;line-height:1.9;color:var(--theme-secondary);margin:10px 0 0;min-height:19px}
+.seasonal-art{pointer-events:none;overflow:hidden}
+@media(max-width:1000px) and (min-width:601px){.theme-choice{gap:6px;padding:8px}.theme-symbol{width:23px;font-size:18px}.theme-choice small{display:none}.theme-tick{font-size:10px}.theme-choice strong{font-size:10px}}
+@media(max-width:600px){.theme-lab{padding:14px;margin-bottom:19px}.theme-lab-heading{margin-bottom:10px}.theme-lab h2{font-size:12px}.theme-options{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}.theme-choice:first-child{grid-column:1/-1;min-height:44px}.theme-choice:first-child .theme-choice-text{flex-direction:row;align-items:center;gap:10px}.theme-choice:first-child .theme-symbol{height:27px;width:27px}.theme-choice{min-height:54px;padding:8px;gap:7px}.theme-choice strong{font-size:11px}.theme-symbol{width:26px;height:31px}.theme-status{font-size:10px}.seasonal-art{opacity:1}}
