@@ -1,0 +1,24 @@
+{
+  "name": "menucafe-worker",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Cloudflare Worker version of the Menu Cafe site (menus, owner panels, D1 storage).",
+  "scripts": {
+    "build": "node scripts/build-assets.mjs",
+    "dev": "npm run build && wrangler dev --local",
+    "test:unit": "node --test test/unit.test.mjs",
+    "test:api": "node scripts/run-api-tests.mjs",
+    "test": "npm run test:unit && npm run test:api",
+    "db:migrate:local": "wrangler d1 migrations apply menucafe --local",
+    "db:migrate:remote": "wrangler d1 migrations apply menucafe --remote",
+    "build:seed": "node scripts/build-seed.mjs",
+    "deploy": "npm run build && wrangler d1 migrations apply menucafe --remote && wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^4.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
