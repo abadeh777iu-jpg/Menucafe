@@ -92,6 +92,10 @@ try {
       fs.mkdirSync(SHOTS, {recursive: true});
       await page.locator('#theme-panel').screenshot({path: path.join(SHOTS, `admin-theme-${width}.png`)});
       await page.locator('#schedule-panel').screenshot({path: path.join(SHOTS, `admin-schedule-${width}.png`)});
+      for (const [name, selector] of [['categories', '#category-list'], ['items', '#item-list'], ['account', '#password-form'], ['settings', '#profile-form']]) {
+        const box = page.locator(selector);
+        if (await box.count()) await box.first().screenshot({path: path.join(SHOTS, `admin-${name}-${width}.png`)});
+      }
     }
     await context.close();
   }
