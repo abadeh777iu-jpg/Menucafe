@@ -8,14 +8,15 @@ const PASSWORD = process.env.OWNER_PASSWORD;
 if (!BASE || !PASSWORD) throw new Error('run through scripts/run-api-tests.mjs');
 
 class Client {
-  constructor() {
+  constructor(cookieName = 'menu_session') {
+    this.cookieName = cookieName;
     this.cookie = null;
     this.csrf = null;
   }
 
   async request(method, path, body, { headers = {}, raw = null } = {}) {
     const head = { ...headers };
-    if (this.cookie) head.Cookie = `menu_session=${this.cookie}`;
+    if (this.cookie) head.Cookie = `${this.cookieName}=${this.cookie}`;
     let payload;
     if (raw !== null) {
       payload = raw;
@@ -74,7 +75,7 @@ describe('public site', () => {
   test('unknown paths, reserved slugs and data files are not served', async () => {
     const client = new Client();
     assert.equal((await client.request('GET', '/nope')).status, 404);
-    assert.equal((await client.request('GET', '/admin')).status, 404);
+    assert.equal((await client.request('GET', '/admin')).status, 200); // manager sign-in page, no restaurant yet
     assert.equal((await client.request('GET', '/admin/nope-restaurant')).status, 404);
     assert.equal((await client.request('GET', '/data/aria.json')).status, 404);
     assert.equal((await client.request('GET', '/server.py')).status, 404);
@@ -419,5 +420,128 @@ describe('request handling', () => {
     const response = await new Client().request('GET', '/api/nothing/here');
     assert.equal(response.status, 404);
     assert.equal(response.body.error, 'آدرس پیدا نشد.');
+  });
+});
+
+// ----- licences and the seller panel -----------------------------------------------------
+
+const LICENSE_RE = /^MCF-[A-HJ-NP-Z2-9]{4}(-[A-HJ-NP-Z2-9]{4}){3}$/;
+
+// Keeps the cookie and CSRF token from a successful response, as a browser would.
+function adopt(client, response) {
+  if (response.status === 200) {
+    const setCookie = response.headers.get('set-cookie') || '';
+    client.cookie = setCookie.split(';')[0].split('=').slice(1).join('=');
+    client.csrf = response.body.csrfToken;
+  }
+  return client;
+}
+
+async function sellerClient() {
+  const client = new Client('menu_super');
+  const response = await client.request('POST', '/api/super/login', { username: 'seller.test', password: PASSWORD });
+  assert.equal(response.status, 200, JSON.stringify(response.body));
+  return adopt(client, response);
+}
+
+async function newRestaurant(seller, label = 'shop') {
+  const slug = `${label}-${uniq()}`;
+  const created = await seller.write('POST', '/api/super/restaurants', { slug, name: 'کافه تست', englishName: 'Test Cafe' });
+  assert.equal(created.status, 201, JSON.stringify(created.body));
+  return slug;
+}
+
+describe('seller panel', () => {
+  test('seller sign-in is separate from manager sessions and needs CSRF for writes', async () => {
+    assert.equal((await new Client('menu_super').request('GET', '/api/super/restaurants')).status, 401);
+    const wrong = await new Client('menu_super').request('POST', '/api/super/login', { username: 'seller.test', password: 'wrong-pass-123' });
+    assert.equal(wrong.status, 401);
+    const seller = await sellerClient();
+    const list = await seller.request('GET', '/api/super/restaurants');
+    assert.equal(list.status, 200);
+    assert.ok(list.body.restaurants.some((r) => r.slug === 'aria'));
+    // A manager's session cookie does not open the seller panel, and the seller cookie does not open a manager panel.
+    const manager = await ownerClient('aria.owner');
+    assert.equal((await manager.request('GET', '/api/super/restaurants')).status, 401);
+    const asManager = new Client('menu_session');
+    asManager.cookie = seller.cookie;
+    assert.equal((await asManager.request('GET', '/api/admin/aria')).status, 401);
+    // Writes need the CSRF token.
+    const noCsrf = await new Client('menu_super');
+    noCsrf.cookie = seller.cookie;
+    assert.equal((await noCsrf.request('POST', '/api/super/restaurants', { slug: 'nope-cafe', name: 'x' })).status, 403);
+  });
+
+  test('seller creates restaurants with default rules; reserved and duplicate addresses are refused', async () => {
+    const seller = await sellerClient();
+    const slug = await newRestaurant(seller, 'cafe');
+    const again = await seller.write('POST', '/api/super/restaurants', { slug, name: 'کافه تست' });
+    assert.equal(again.status, 409);
+    const reserved = await seller.write('POST', '/api/super/restaurants', { slug: 'admin', name: 'x' });
+    assert.equal(reserved.status, 400);
+    const blank = await seller.write('POST', '/api/super/restaurants', { slug: `blank-${uniq()}`, name: '' });
+    assert.equal(blank.status, 400);
+    const menu = await publicMenu(slug);
+    assert.equal(menu.restaurant.name, 'کافه تست');
+    const seen = await seller.request('GET', '/api/super/restaurants');
+    assert.ok(seen.body.restaurants.some((r) => r.slug === slug && r.activeLicenses === 0));
+  });
+
+  test('a licence signs a manager into its own restaurant only', async () => {
+    const seller = await sellerClient();
+    const slug = await newRestaurant(seller, 'lic');
+    const other = await newRestaurant(seller, 'other');
+    const issued = await seller.write('POST', `/api/super/restaurants/${slug}/licenses`, { label: 'مدیر تست' });
+    assert.equal(issued.status, 201, JSON.stringify(issued.body));
+    assert.match(issued.body.key, LICENSE_RE);
+    assert.equal(issued.body.keyHint, issued.body.key.slice(-4));
+    const listed = await seller.request('GET', `/api/super/restaurants/${slug}/licenses`);
+    assert.equal(listed.body.licenses.length, 1);
+    assert.equal(JSON.stringify(listed.body).includes(issued.body.key), false, 'the full key is never listed again');
+
+    assert.equal((await new Client().request('POST', '/api/auth/license-login', { licenseKey: 'MCF-AAAA-AAAA-AAAA-AAAA' })).status, 401);
+    const typed = issued.body.key.toLowerCase().replace(/-/g, '');
+    const { client: manager, response } = { client: new Client(), response: await new Client().request('POST', '/api/auth/license-login', { licenseKey: typed }) };
+    assert.equal(response.status, 200, JSON.stringify(response.body));
+    assert.equal(response.body.user.restaurantSlug, slug);
+    adopt(manager, response);
+
+    const view = await manager.request('GET', `/api/admin/${slug}`);
+    assert.equal(view.status, 200);
+    assert.deepEqual(view.body.users, [], 'the licence account is not listed as an owner');
+    assert.equal((await manager.request('GET', `/api/admin/${other}`)).status, 403);
+    assert.equal((await manager.request('PUT', `/api/admin/${slug}/profile`, { name: 'نام تازه' })).status, 403);
+    const saved = await manager.write('PUT', `/api/admin/${slug}/profile`, { name: 'نام تازه' });
+    assert.equal(saved.status, 200, JSON.stringify(saved.body));
+    assert.equal(saved.body.restaurant.name, 'نام تازه');
+    assert.equal((await manager.write('POST', `/api/admin/${slug}/account/password`, { currentPassword: 'x', newPassword: 'y' })).status, 403);
+    const pages = await new Client().request('GET', '/admin');
+    assert.equal(pages.status, 200);
+    assert.match(String(pages.body), /licenseKey/);
+    assert.equal((await new Client().request('GET', '/super')).status, 200);
+  });
+
+  test('revoking a licence ends its sessions at once and blocks new sign-ins', async () => {
+    const seller = await sellerClient();
+    const slug = await newRestaurant(seller, 'rev');
+    const issued = await seller.write('POST', `/api/super/restaurants/${slug}/licenses`, { label: 'قرارداد ۱' });
+    const first = adopt(new Client(), await new Client().request('POST', '/api/auth/license-login', { licenseKey: issued.body.key }));
+    assert.equal((await first.request('GET', `/api/admin/${slug}`)).status, 200);
+    const list = await seller.request('GET', `/api/super/restaurants/${slug}/licenses`);
+    const licenseId = list.body.licenses[0].id;
+    const revoked = await seller.write('POST', `/api/super/licenses/${licenseId}/revoke`);
+    assert.equal(revoked.status, 200);
+    assert.equal((await first.request('GET', `/api/admin/${slug}`)).status, 401);
+    const again = await new Client().request('POST', '/api/auth/license-login', { licenseKey: issued.body.key });
+    assert.equal(again.status, 401);
+    const after = await seller.request('GET', `/api/super/restaurants/${slug}/licenses`);
+    assert.equal(after.body.licenses[0].active, false);
+    assert.equal((await seller.write('POST', `/api/super/licenses/${licenseId}/revoke`)).status, 404);
+  });
+
+  test('seller sign-out ends the seller session', async () => {
+    const seller = await sellerClient();
+    assert.equal((await seller.write('POST', '/api/super/logout')).status, 200);
+    assert.equal((await seller.request('GET', '/api/super/restaurants')).status, 401);
   });
 });

@@ -113,3 +113,15 @@ test('a hash made at the ceiling verifies with the right password only', async (
   assert.equal(await security.verifyPassword('correct-horse-battery', stored), true);
   assert.equal(await security.verifyPassword('wrong-horse-battery', stored), false);
 });
+
+test('licence keys: format, normalisation and no look-alike characters', () => {
+  const key = security.newLicenseKey();
+  assert.match(key, /^MCF-[A-HJ-NP-Z2-9]{4}(-[A-HJ-NP-Z2-9]{4}){3}$/);
+  assert.equal(security.normalizeLicenseKey(key), key.replace(/-/g, ''));
+  assert.equal(security.normalizeLicenseKey(key.toLowerCase().replace(/-/g, ' ')), key.replace(/-/g, ''));
+  assert.equal(security.normalizeLicenseKey('MCF-IIII-OOOO-0000-1111'), null);
+  assert.equal(security.normalizeLicenseKey('nonsense'), null);
+  assert.equal(security.normalizeLicenseKey(undefined), null);
+  const keys = new Set(Array.from({ length: 200 }, () => security.newLicenseKey()));
+  assert.equal(keys.size, 200);
+});

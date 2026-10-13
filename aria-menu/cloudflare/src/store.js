@@ -26,7 +26,7 @@ export const ICONS = [
 ];
 export const ICON_IDS = new Set(ICONS.map((icon) => icon[0]));
 
-export const RESERVED_SLUGS = new Set(['admin', 'api', 'assets', 'data', 'static', 'index']);
+export const RESERVED_SLUGS = new Set(['admin', 'api', 'assets', 'data', 'static', 'index', 'super']);
 export const SLUG_RE = /^[a-z0-9][a-z0-9-]{1,39}$/;
 const USERNAME_RE = /^[a-z0-9_.-]{3,40}$/;
 const MAX_PRICE = 1000000000;
@@ -187,7 +187,7 @@ export async function publicMenu(db, slug, moment) {
 // ----- owner reads -------------------------------------------------------------------
 
 export async function listUsers(db, slug) {
-  const rows = await all(db, 'SELECT id, username, created_at FROM users WHERE restaurant_slug=? ORDER BY id', slug);
+  const rows = await all(db, 'SELECT id, username, created_at FROM users WHERE restaurant_slug=? AND license_id IS NULL ORDER BY id', slug);
   return rows.map((r) => ({ id: r.id, username: r.username, createdAt: r.created_at }));
 }
 
@@ -458,7 +458,7 @@ export async function addUser(db, slug, username, passwordHash) {
 }
 
 async function userInRestaurant(db, slug, userId) {
-  if (!(await one(db, 'SELECT 1 AS ok FROM users WHERE id=? AND restaurant_slug=?', userId, slug))) {
+  if (!(await one(db, 'SELECT 1 AS ok FROM users WHERE id=? AND restaurant_slug=? AND license_id IS NULL', userId, slug))) {
     throw new ApiError('کاربر پیدا نشد.', 404);
   }
 }
@@ -505,7 +505,7 @@ export async function createSession(db, digest, userId, csrfToken, expiresAt) {
 
 export async function findSession(db, digest) {
   return one(db,
-    'SELECT s.csrf_token, u.id AS user_id, u.username, u.restaurant_slug'
+    'SELECT s.csrf_token, u.id AS user_id, u.username, u.restaurant_slug, u.license_id'
     + ' FROM sessions s JOIN users u ON u.id = s.user_id'
     + ' WHERE s.token_hash=? AND s.expires_at > ?',
     digest, now());
@@ -533,4 +533,115 @@ export async function throttleRecord(db, key, windowSeconds, stamp) {
 
 export async function throttleReset(db, key) {
   await run(db, 'DELETE FROM login_throttle WHERE key=?', key);
+}
+
+// ----- licences (manager sign-in) ----------------------------------------------------
+
+// A licence's hidden user row carries this username; `:` is not allowed in typed usernames, so no clash.
+const licenseUsername = (licenseId) => `license:${licenseId}`;
+// A password hash that can never verify, so the hidden user cannot sign in with a password.
+const NO_PASSWORD = '!license';
+
+export async function licenseByKeyDigest(db, digest) {
+  return one(db,
+    'SELECT l.id, l.restaurant_slug, u.id AS user_id FROM licenses l'
+    + ' JOIN users u ON u.license_id = l.id'
+    + ' WHERE l.key_hash=? AND l.revoked_at IS NULL',
+    digest);
+}
+
+export async function touchLicense(db, licenseId) {
+  await run(db, 'UPDATE licenses SET last_used_at=? WHERE id=?', now(), licenseId);
+}
+
+export async function createLicense(db, slug, label, digest, hint) {
+  if (!(await restaurantExists(db, slug))) throw new ApiError('رستوران پیدا نشد.', 404);
+  await run(db, 'INSERT INTO licenses (restaurant_slug, label, key_hash, key_hint, created_at) VALUES (?, ?, ?, ?, ?)',
+    slug, label, digest, hint, now());
+  const row = await one(db, 'SELECT id FROM licenses WHERE key_hash=?', digest);
+  await run(db, 'INSERT INTO users (username, password_hash, restaurant_slug, created_at, license_id) VALUES (?, ?, ?, ?, ?)',
+    licenseUsername(row.id), NO_PASSWORD, slug, now(), row.id);
+  return row.id;
+}
+
+export async function listLicenses(db, slug) {
+  const rows = await all(db,
+    'SELECT id, label, key_hint, created_at, last_used_at, revoked_at FROM licenses WHERE restaurant_slug=? ORDER BY id DESC',
+    slug);
+  return rows.map((r) => ({
+    id: r.id, label: r.label, keyHint: r.key_hint, createdAt: r.created_at,
+    lastUsedAt: r.last_used_at || null, revokedAt: r.revoked_at || null, active: !r.revoked_at,
+  }));
+}
+
+// Ends the licence at once: no new sign-ins, and every open session of that licence is removed.
+export async function revokeLicense(db, licenseId) {
+  const row = await one(db, 'SELECT id FROM licenses WHERE id=? AND revoked_at IS NULL', licenseId);
+  if (!row) throw new ApiError('لایسنس پیدا نشد یا قبلاً باطل شده است.', 404);
+  await db.batch([
+    stmt(db, 'UPDATE licenses SET revoked_at=? WHERE id=?', now(), licenseId),
+    stmt(db, 'DELETE FROM sessions WHERE user_id IN (SELECT id FROM users WHERE license_id=?)', licenseId),
+  ]);
+}
+
+// ----- restaurants (super-admin) -----------------------------------------------------
+
+export async function listRestaurants(db) {
+  const rows = await all(db,
+    'SELECT r.slug, r.name, r.english_name, r.created_at,'
+    + ' (SELECT COUNT(*) FROM licenses l WHERE l.restaurant_slug = r.slug AND l.revoked_at IS NULL) AS active_licenses'
+    + ' FROM restaurants r ORDER BY r.created_at, r.slug');
+  return rows.map((r) => ({
+    slug: r.slug, name: r.name, englishName: r.english_name, createdAt: r.created_at,
+    activeLicenses: r.active_licenses,
+  }));
+}
+
+// Same rows as scripts/make-restaurant.mjs: the restaurant plus its default (enabled) theme rules.
+export async function createRestaurant(db, payload) {
+  const slug = cleanSlug(payload.slug);
+  if (await restaurantExists(db, slug)) throw new ApiError('این آدرس قبلاً برای رستوران دیگری ثبت شده است.', 409);
+  const name = cleanText(payload.name, 'نام رستوران', 1, 80);
+  const english = cleanText(payload.englishName, 'نام لاتین', 0, 80);
+  const theme = cleanTheme(payload.theme === undefined || payload.theme === null ? 'default' : payload.theme);
+  const stamp = now();
+  const statements = [stmt(db,
+    'INSERT INTO restaurants (slug, name, english_name, mark, headline, note, description, footer, theme, created_at, updated_at)'
+    + ' VALUES (?, ?, ?, ?, ?, \'\', \'\', \'\', ?, ?, ?)',
+    slug, name, english, [...name][0] || '', name, theme, stamp, stamp)];
+  schedule.DEFAULT_RULES.forEach((rule, position) => {
+    statements.push(stmt(db,
+      'INSERT INTO theme_rules (restaurant_slug, key, kind, label, theme, enabled, calendar, start_month, start_day,'
+      + ' end_month, end_day, priority, timezone, position, updated_at)'
+      + ' VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      slug, rule.key, rule.kind, rule.label, rule.theme, rule.calendar, rule.start[0], rule.start[1],
+      rule.end[0], rule.end[1], rule.priority, schedule.TIMEZONE_NAME, position, stamp));
+  });
+  await db.batch(statements);
+  return slug;
+}
+
+// ----- super-admin accounts and sessions ---------------------------------------------
+
+export async function superAdminByUsername(db, username) {
+  return one(db, 'SELECT * FROM super_admins WHERE username=?', username);
+}
+
+export async function createSuperSession(db, digest, adminId, csrfToken, expiresAt) {
+  await db.batch([
+    stmt(db, 'DELETE FROM super_sessions WHERE expires_at <= ?', now()),
+    stmt(db, 'INSERT INTO super_sessions (token_hash, admin_id, csrf_token, expires_at) VALUES (?, ?, ?, ?)',
+      digest, adminId, csrfToken, expiresAt),
+  ]);
+}
+
+export async function findSuperSession(db, digest) {
+  return one(db,
+    'SELECT s.csrf_token, a.username FROM super_sessions s JOIN super_admins a ON a.id = s.admin_id'
+    + ' WHERE s.token_hash=? AND s.expires_at > ?',
+    digest, now());
+}
+
+export async function deleteSuperSession(db, digest) {
+  await run(db, 'DELETE FROM super_sessions WHERE token_hash=?', digest);
 }

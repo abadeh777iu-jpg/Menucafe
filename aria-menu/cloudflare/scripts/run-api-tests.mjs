@@ -53,6 +53,10 @@ try {
     writeFileSync(file, sql, 'utf8');
     run('npx', ['wrangler', 'd1', 'execute', 'menucafe', '--local', '--persist-to', persist, '--file', file]);
   }
+  const superSql = run('node', ['scripts/make-superadmin.mjs', '--username', 'seller.test'], { input: `${PASSWORD}\n` });
+  const superFile = join(persist, 'seller.sql');
+  writeFileSync(superFile, superSql, 'utf8');
+  run('npx', ['wrangler', 'd1', 'execute', 'menucafe', '--local', '--persist-to', persist, '--file', superFile]);
   worker = spawn('npx', ['wrangler', 'dev', '--local', '--ip', '127.0.0.1', '--port', String(port),
     '--persist-to', persist], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' });
   worker.stdout.on('data', () => {});

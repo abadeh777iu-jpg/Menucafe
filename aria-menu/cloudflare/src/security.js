@@ -98,6 +98,25 @@ export function dummyHash(iterations) {
   return dummy;
 }
 
+// Licence keys look like MCF-XXXX-XXXX-XXXX-XXXX. 80 random bits; the alphabet leaves out 0, 1, I and O.
+// Only the SHA-256 digest is stored (the key is random, so a slow hash is not needed).
+const LICENSE_ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+const LICENSE_BODY_RE = /^MCF[A-HJ-NP-Z2-9]{16}$/;
+
+export function newLicenseKey() {
+  const bytes = randomBytes(16);
+  let body = '';
+  for (const byte of bytes) body += LICENSE_ALPHABET[byte & 31];
+  return `MCF-${body.slice(0, 4)}-${body.slice(4, 8)}-${body.slice(8, 12)}-${body.slice(12, 16)}`;
+}
+
+// Accepts the key with or without dashes, in any letter case. Returns null when the shape is wrong.
+export function normalizeLicenseKey(value) {
+  if (typeof value !== 'string') return null;
+  const text = value.toUpperCase().replace(/[\s-]/g, '');
+  return LICENSE_BODY_RE.test(text) ? text : null;
+}
+
 export function codePointLength(text) {
   return [...text].length;
 }

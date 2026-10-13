@@ -27,14 +27,20 @@
 
   <section id="login-view" class="panel login-panel" hidden>
     <h1>ورود به پنل مدیریت</h1>
-    <p class="muted">با نام کاربری و رمز عبور اختصاصی رستوران خود وارد شوید.</p>
-    <form id="login-form" class="stack" autocomplete="on">
-      <label>نام کاربری
-        <input name="username" type="text" autocomplete="username" required maxlength="40" dir="ltr">
+    <p class="muted">کلید لایسنسی را که از طرف فروشنده به شما داده شده وارد کنید.</p>
+    <form id="login-form" class="stack" autocomplete="off">
+      <label>کلید لایسنس
+        <input name="licenseKey" type="text" maxlength="40" dir="ltr" placeholder="MCF-XXXX-XXXX-XXXX-XXXX" spellcheck="false" autocapitalize="characters">
       </label>
-      <label>رمز عبور
-        <input name="password" type="password" autocomplete="current-password" required maxlength="200" dir="ltr">
-      </label>
+      <details class="legacy-login">
+        <summary>ورود با نام کاربری و رمز عبور (حساب‌های قدیمی)</summary>
+        <label>نام کاربری
+          <input name="username" type="text" autocomplete="username" maxlength="40" dir="ltr">
+        </label>
+        <label>رمز عبور
+          <input name="password" type="password" autocomplete="current-password" maxlength="200" dir="ltr">
+        </label>
+      </details>
       <button class="btn primary" type="submit">ورود</button>
       <p class="form-msg" data-msg role="status"></p>
     </form>

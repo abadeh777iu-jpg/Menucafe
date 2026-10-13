@@ -7,6 +7,7 @@ import * as security from './security.js';
 import * as schedule from './schedule.js';
 
 const COOKIE_NAME = 'menu_session';
+const SUPER_COOKIE = 'menu_super';
 const MAX_BODY_BYTES = 64 * 1024;
 
 // Same files the Python server exposes. Nothing else in aria-menu/ is public.
@@ -15,7 +16,7 @@ const STATIC = new Set([
   '/winter.css', '/seasonal-art.js', '/seasonal.css', '/themes.js', '/themes.css', '/styles.css', '/app.js',
   '/menu-data.js', '/assets/Vazirmatn.woff2', '/assets/OFL.txt',
 ]);
-const PAGE_FILES = new Set(['/admin.html', '/admin.js', '/admin.css']);
+const PAGE_FILES = new Set(['/admin.html', '/admin.js', '/admin.css', '/super.html', '/super.js']);
 const SLUG = '[a-z0-9][a-z0-9-]{1,39}';
 const RESTAURANT_PAGE = new RegExp(`^/(${SLUG})/?$`);
 const ADMIN_PAGE = new RegExp(`^/admin/(${SLUG})/?$`);
@@ -170,6 +171,9 @@ async function page(request, env, url) {
   let match = PREVIEW_PAGE.exec(path);
   if (match) return preview(request, env, url, match[1]);
 
+  if (path === '/admin' || path === '/admin/') return assetResponse(env, request, '/admin.html');
+  if (path === '/super' || path === '/super/') return assetResponse(env, request, '/super.html');
+
   match = ADMIN_PAGE.exec(path);
   if (match) {
     if (!(await store.restaurantExists(env.DB, match[1]))) return notFound();
@@ -221,6 +225,12 @@ async function api(request, env, url) {
   if (parts.length === 3 && parts[0] === 'api' && parts[1] === 'auth' && parts[2] === 'logout' && method === 'POST') {
     return logout(env, request);
   }
+  if (parts.length === 3 && parts[0] === 'api' && parts[1] === 'auth' && parts[2] === 'license-login' && method === 'POST') {
+    return licenseLogin(env, request);
+  }
+  if (parts.length >= 3 && parts[0] === 'api' && parts[1] === 'super') {
+    return superApi(env, request, method, parts.slice(2));
+  }
   if (parts.length >= 3 && parts[0] === 'api' && parts[1] === 'admin') {
     return adminApi(env, request, method, parts.slice(2));
   }
@@ -230,7 +240,7 @@ async function api(request, env, url) {
 async function authMe(env, request) {
   const session = await requireSession(env, request);
   return json(200, {
-    user: { username: session.username, restaurantSlug: session.restaurant_slug },
+    user: { username: displayName(session), restaurantSlug: session.restaurant_slug },
     csrfToken: session.csrf_token,
   });
 }
@@ -263,6 +273,33 @@ async function login(env, request) {
   await store.createSession(env.DB, await security.tokenDigest(token), user.id, csrf, expires);
   return json(200, {
     user: { username, restaurantSlug: user.restaurant_slug },
+    csrfToken: csrf,
+  }, { 'Set-Cookie': sessionCookie(token, security.SESSION_TTL_SECONDS) });
+}
+
+// Manager sign-in with the licence key that the seller issued for one restaurant.
+async function licenseLogin(env, request) {
+  const data = await readBody(request);
+  const key = security.normalizeLicenseKey(data.licenseKey);
+  const bucket = `${clientKey(request)}|license`;
+  const stamp = Math.floor(Date.now() / 1000);
+  const window = security.LOGIN_FAILURE_WINDOW_SECONDS;
+  if (await store.throttleBlocked(env.DB, bucket, security.LOGIN_FAILURE_LIMIT, window, stamp)) {
+    throw new ApiError('تعداد تلاش‌ها زیاد است؛ چند دقیقه بعد دوباره امتحان کنید.', 429);
+  }
+  const license = key ? await store.licenseByKeyDigest(env.DB, await security.tokenDigest(key)) : null;
+  if (!license) {
+    await store.throttleRecord(env.DB, bucket, window, stamp);
+    throw new ApiError('کلید لایسنس معتبر نیست یا باطل شده است.', 401);
+  }
+  await store.throttleReset(env.DB, bucket);
+  const token = security.newToken();
+  const csrf = security.newToken();
+  await store.createSession(env.DB, await security.tokenDigest(token), license.user_id, csrf,
+    stamp + security.SESSION_TTL_SECONDS);
+  await store.touchLicense(env.DB, license.id);
+  return json(200, {
+    user: { username: 'مدیر (با لایسنس)', restaurantSlug: license.restaurant_slug },
     csrfToken: csrf,
   }, { 'Set-Cookie': sessionCookie(token, security.SESSION_TTL_SECONDS) });
 }
@@ -373,11 +410,16 @@ async function adminApi(env, request, method, rest) {
   throw new ApiError('آدرس پیدا نشد.', 404);
 }
 
+function displayName(session) {
+  return session.license_id ? 'مدیر (با لایسنس)' : session.username;
+}
+
 function hasOwn(object, key) {
   return Object.prototype.hasOwnProperty.call(object, key);
 }
 
 async function changeOwnPassword(env, request, session) {
+  if (session.license_id) throw new ApiError('حساب لایسنسی رمز عبور ندارد؛ برای ورود از کلید لایسنس استفاده کنید.', 403);
   const body = await readBody(request);
   const current = body.currentPassword ? String(body.currentPassword) : '';
   const next = body.newPassword ? String(body.newPassword) : '';
@@ -403,4 +445,104 @@ async function changeOwnPassword(env, request, session) {
   const token = getCookie(request, COOKIE_NAME);
   await store.changePassword(env.DB, session.user_id, await security.hashPassword(next, iterations),
     await security.tokenDigest(token));
+}
+
+// ----- super-admin (the seller's panel) ----------------------------------------------
+
+function superCookie(value, maxAge) {
+  return `${SUPER_COOKIE}=${value}; Path=/; HttpOnly; SameSite=Strict; Max-Age=${maxAge}; Secure`;
+}
+
+async function requireSuper(env, request, { csrf = false } = {}) {
+  const token = getCookie(request, SUPER_COOKIE);
+  const session = token ? await store.findSuperSession(env.DB, await security.tokenDigest(token)) : null;
+  if (!session) throw new ApiError('برای ادامه باید وارد شوید.', 401);
+  if (csrf) {
+    const sent = request.headers.get('X-CSRF-Token') || '';
+    if (!security.sameText(sent, session.csrf_token)) {
+      throw new ApiError('نشست فرم معتبر نیست؛ صفحه را دوباره بارگذاری کنید.', 403);
+    }
+  }
+  return session;
+}
+
+async function superLogin(env, request) {
+  const data = await readBody(request);
+  const username = (data.username ? String(data.username) : '').trim().toLowerCase();
+  const password = data.password ? String(data.password) : '';
+  if (!username || !password || security.codePointLength(password) > security.PASSWORD_MAX_LENGTH) {
+    throw new ApiError('نام کاربری یا رمز عبور اشتباه است.', 401);
+  }
+  const key = `${clientKey(request)}|super|${username}`;
+  const stamp = Math.floor(Date.now() / 1000);
+  const window = security.LOGIN_FAILURE_WINDOW_SECONDS;
+  if (await store.throttleBlocked(env.DB, key, security.LOGIN_FAILURE_LIMIT, window, stamp)) {
+    throw new ApiError('تعداد تلاش‌ها زیاد است؛ چند دقیقه بعد دوباره امتحان کنید.', 429);
+  }
+  const admin = await store.superAdminByUsername(env.DB, username);
+  const stored = admin ? admin.password_hash : await security.dummyHash(security.passwordIterations(env));
+  const valid = await security.verifyPassword(password, stored);
+  if (!admin || !valid) {
+    await store.throttleRecord(env.DB, key, window, stamp);
+    throw new ApiError('نام کاربری یا رمز عبور اشتباه است.', 401);
+  }
+  await store.throttleReset(env.DB, key);
+  const token = security.newToken();
+  const csrf = security.newToken();
+  await store.createSuperSession(env.DB, await security.tokenDigest(token), admin.id, csrf,
+    stamp + security.SESSION_TTL_SECONDS);
+  return json(200, { admin: { username }, csrfToken: csrf },
+    { 'Set-Cookie': superCookie(token, security.SESSION_TTL_SECONDS) });
+}
+
+async function issueLicense(env, slug, label) {
+  const key = security.newLicenseKey();
+  const hint = key.slice(-4);
+  await store.createLicense(env.DB, slug, label, await security.tokenDigest(security.normalizeLicenseKey(key)), hint);
+  return { key, keyHint: hint };
+}
+
+async function superApi(env, request, method, rest) {
+  const [head, ...tail] = rest;
+  const db = env.DB;
+  const numericId = (value) => (/^[0-9]+$/.test(value || '') ? Number(value) : null);
+
+  if (head === 'login' && tail.length === 0 && method === 'POST') return superLogin(env, request);
+  if (head === 'me' && tail.length === 0 && method === 'GET') {
+    const session = await requireSuper(env, request);
+    return json(200, { admin: { username: session.username }, csrfToken: session.csrf_token });
+  }
+
+  const writes = method !== 'GET';
+  await requireSuper(env, request, { csrf: writes });
+
+  if (head === 'logout' && tail.length === 0 && method === 'POST') {
+    await store.deleteSuperSession(db, await security.tokenDigest(getCookie(request, SUPER_COOKIE)));
+    return json(200, { ok: true }, { 'Set-Cookie': superCookie('', 0) });
+  }
+  if (head === 'restaurants' && tail.length === 0 && method === 'GET') {
+    return json(200, { restaurants: await store.listRestaurants(db) });
+  }
+  if (head === 'restaurants' && tail.length === 0 && method === 'POST') {
+    const body = await readBody(request);
+    const slug = await store.createRestaurant(db, body);
+    return json(201, { slug, restaurants: await store.listRestaurants(db) });
+  }
+  if (head === 'restaurants' && tail.length === 2 && tail[1] === 'licenses') {
+    if (method === 'GET') return json(200, { licenses: await store.listLicenses(db, tail[0]) });
+    if (method === 'POST') {
+      if (!store.SLUG_RE.test(tail[0])) throw new ApiError('رستوران پیدا نشد.', 404);
+      const body = await readBody(request);
+      const label = store.cleanText(body.label ?? '', 'برچسب لایسنس', 0, 60);
+      const issued = await issueLicense(env, tail[0], label);
+      return json(201, { ...issued, slug: tail[0], label, licenses: await store.listLicenses(db, tail[0]) });
+    }
+  }
+  if (head === 'licenses' && tail.length === 2 && tail[1] === 'revoke' && method === 'POST') {
+    const licenseId = numericId(tail[0]);
+    if (licenseId === null) throw new ApiError('لایسنس پیدا نشد.', 404);
+    await store.revokeLicense(db, licenseId);
+    return json(200, { ok: true });
+  }
+  throw new ApiError('آدرس پیدا نشد.', 404);
 }

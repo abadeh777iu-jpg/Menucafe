@@ -863,11 +863,20 @@
     const button = $('button[type=submit]', form);
     button.disabled = true;
     try {
-      const session = await api('POST', 'auth/login', {
-        username: form.elements.username.value,
-        password: form.elements.password.value,
-      });
+      const licenseKey = form.elements.licenseKey.value.trim();
+      const session = licenseKey
+        ? await api('POST', 'auth/license-login', { licenseKey })
+        : await api('POST', 'auth/login', {
+          username: form.elements.username.value.trim(),
+          password: form.elements.password.value,
+        });
       form.elements.password.value = '';
+      form.elements.licenseKey.value = '';
+      if (!slug) {
+        // Signed in from /admin with a licence: continue to the restaurant the licence belongs to.
+        location.assign(`/admin/${encodeURIComponent(session.user.restaurantSlug)}`);
+        return;
+      }
       if (session.user.restaurantSlug !== slug) {
         await api('POST', 'auth/logout').catch(() => {});
         csrf = '';
@@ -904,7 +913,14 @@
 
   async function start() {
     if (!slug) {
-      say('آدرس پنل معتبر نیست.', 'error');
+      // /admin without a restaurant: only the licence sign-in is offered here.
+      try {
+        const me = await api('GET', 'auth/me');
+        location.replace(`/admin/${encodeURIComponent(me.user.restaurantSlug)}`);
+      } catch {
+        showOnly('login');
+        say('کلید لایسنس خود را وارد کنید.');
+      }
       return;
     }
     $('#admin-public').href = `/${slug}`;

@@ -9,7 +9,7 @@ const source = join(here, '..', '..');        // aria-menu/
 const target = join(here, '..', 'public');    // cloudflare/public/
 
 const FILES = [
-  'index.html', 'admin.html', 'admin.js', 'admin.css', 'app.js', 'menu-data.js',
+  'index.html', 'admin.html', 'admin.js', 'admin.css', 'super.html', 'super.js', 'app.js', 'menu-data.js',
   'styles.css', 'themes.css', 'themes.js', 'seasonal.css', 'seasonal-art.js',
   'winter.css', 'winter-art.js', 'winter-effects.js',
   'atmosphere.css', 'atmosphere-art.js', 'atmosphere-effects.js',
