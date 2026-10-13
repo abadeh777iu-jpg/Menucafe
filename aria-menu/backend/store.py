@@ -105,7 +105,7 @@ CREATE TABLE IF NOT EXISTS theme_rules (
   kind TEXT NOT NULL,
   label TEXT NOT NULL,
   theme TEXT NOT NULL,
-  enabled INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
   calendar TEXT NOT NULL,
   start_month INTEGER NOT NULL,
   start_day INTEGER NOT NULL,
@@ -249,13 +249,13 @@ def migrate(conn):
 
 
 def ensure_rules(conn, slug):
-    """Create the default schedule rules for a restaurant (disabled). Existing rules are kept."""
+    """Create the default schedule rules for a restaurant (enabled, so themes follow the calendar). Existing rules are kept."""
     stamp = now()
     for position, (key, kind, theme, label, calendar, start, end, priority) in enumerate(schedule.DEFAULT_RULES):
         conn.execute(
             'INSERT OR IGNORE INTO theme_rules (restaurant_slug, key, kind, label, theme, enabled, calendar,'
             ' start_month, start_day, end_month, end_day, priority, timezone, position, updated_at)'
-            ' VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            ' VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             (slug, key, kind, label, theme, calendar, start[0], start[1], end[0], end[1], priority,
              schedule.TIMEZONE_NAME, position, stamp),
         )

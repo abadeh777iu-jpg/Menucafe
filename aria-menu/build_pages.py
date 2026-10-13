@@ -22,7 +22,9 @@ RUNTIME_FILES = [
     'atmosphere-art.js', 'atmosphere-effects.js', 'app.js', 'menu-data.js',
 ]
 RESTAURANTS = ['aria', 'bahar']
-GENERATED = RUNTIME_FILES + ['assets', 'data', 'aria', 'bahar', 'index.html', '.nojekyll']
+SHARED_MODULES = [('cloudflare/src/schedule.js', 'schedule.js'), ('cloudflare/src/jalali.js', 'jalali.js'),
+                  ('cloudflare/src/errors.js', 'errors.js')]
+GENERATED = RUNTIME_FILES + [dst for _, dst in SHARED_MODULES] + ['assets', 'data', 'aria', 'bahar', 'index.html', '.nojekyll']
 
 ROOT_REDIRECT = '''<!doctype html><html lang="fa" dir="rtl"><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -80,6 +82,8 @@ def main():
             (OUT / name).write_text(build_menu_data(), encoding='utf-8')
         else:
             shutil.copy2(SRC / name, OUT / name)
+    for source, target in SHARED_MODULES:
+        shutil.copy2(SRC / source, OUT / target)
     shutil.copytree(SRC / 'assets', OUT / 'assets')
     (OUT / 'data').mkdir()
     for seed in sorted((SRC / 'data').glob('*.json')):

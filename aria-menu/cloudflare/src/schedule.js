@@ -18,7 +18,7 @@ const GREGORIAN_MONTH_NAMES = ['ژانویه', 'فوریه', 'مارس', 'آور
   'اکتبر', 'نوامبر', 'دسامبر'];
 const GREGORIAN_MONTH_DAYS = [31, 29, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
 
-// Default rules are created disabled, so a restaurant changes theme only after its manager opts in.
+// Default rules are created enabled: each theme switches on its own dates. A manager can still turn one off.
 export const DEFAULT_RULES = [
   { key: 'spring', kind: 'seasonal', theme: 'spring', label: 'بهار', calendar: 'jalali', start: [1, 1], end: [3, 31], priority: 40 },
   { key: 'summer', kind: 'seasonal', theme: 'summer', label: 'تابستان', calendar: 'jalali', start: [4, 1], end: [6, 31], priority: 40 },

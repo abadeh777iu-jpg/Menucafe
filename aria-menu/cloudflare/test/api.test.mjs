@@ -85,7 +85,8 @@ describe('public site', () => {
   test('public menu has the restaurant identity and only visible items', async () => {
     const menu = await publicMenu('aria');
     assert.equal(menu.restaurant.name, 'رستوران آریا');
-    assert.equal(menu.restaurant.theme, 'winter'); // seed default; no schedule rule is enabled
+    // Resolved by the date rules, so only check that it is a known theme (the seed default is checked via the admin view).
+    assert.ok(['default', 'winter', 'autumn', 'spring', 'summer', 'nowruz', 'yalda', 'valentine', 'halloween'].includes(menu.restaurant.theme), menu.restaurant.theme);
     assert.ok(menu.categories.length >= 5);
     assert.ok(menu.items.every((item) => !('visible' in item)));
     const missing = await new Client().request('GET', '/api/restaurants/nope-restaurant/menu');

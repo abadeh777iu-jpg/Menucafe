@@ -636,7 +636,8 @@ class ScheduledPublicMenuTests(unittest.TestCase):
 
     def test_event_schedule_selects_valentine_and_manual_override_wins(self):
         port, owner = self.start('2026-02-14T12:00')
-        self.assertEqual(self.public_theme(port), 'winter')  # aria's default; rules start disabled
+        owner.write('PUT', '/api/admin/aria/schedule/valentine', {'enabled': False})
+        self.assertEqual(self.public_theme(port), 'winter')  # 14 Feb is inside the winter season; valentine is off here
         owner.write('PUT', '/api/admin/aria/schedule/valentine', {
             'enabled': True, 'calendar': 'gregorian', 'theme': 'valentine',
             'startMonth': 2, 'startDay': 13, 'endMonth': 2, 'endDay': 15, 'priority': 60})

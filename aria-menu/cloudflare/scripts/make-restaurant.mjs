@@ -1,4 +1,4 @@
-// Creates a new restaurant with its default (disabled) theme rules. Prints SQL for `wrangler d1 execute`.
+// Creates a new restaurant with its default (enabled) theme rules. Prints SQL for `wrangler d1 execute`.
 // Usage:
 //   node scripts/make-restaurant.mjs --slug cafe-nila --name "کافه نیلا" --english "Nila Cafe" --theme autumn > r.sql
 //   npx wrangler d1 execute menucafe --remote --file r.sql
@@ -27,7 +27,7 @@ const lines = [insert('restaurants', {
 DEFAULT_RULES.forEach((rule, position) => {
   lines.push(insert('theme_rules', {
     restaurant_slug: slug, key: rule.key, kind: rule.kind, label: rule.label, theme: rule.theme,
-    enabled: 0, calendar: rule.calendar, start_month: rule.start[0], start_day: rule.start[1],
+    enabled: 1, calendar: rule.calendar, start_month: rule.start[0], start_day: rule.start[1],
     end_month: rule.end[0], end_day: rule.end[1], priority: rule.priority,
     timezone: TIMEZONE_NAME, position, updated_at: stamp,
   }));
