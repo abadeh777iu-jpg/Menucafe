@@ -16,8 +16,8 @@
     {
       "binding": "DB",
       "database_name": "menucafe",
-      // Replace with the ID printed by `npx wrangler d1 create menucafe`.
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      // The ID of the D1 database named menucafe in the Cloudflare account (from `npx wrangler d1 list`).
+      "database_id": "897304af-9c30-4d16-8f0c-8272c3fa9588",
       "migrations_dir": "migrations"
     }
   ],
