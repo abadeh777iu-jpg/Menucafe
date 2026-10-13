@@ -863,14 +863,9 @@
     const button = $('button[type=submit]', form);
     button.disabled = true;
     try {
-      const licenseKey = form.elements.licenseKey.value.trim();
-      const session = licenseKey
-        ? await api('POST', 'auth/license-login', { licenseKey })
-        : await api('POST', 'auth/login', {
-          username: form.elements.username.value.trim(),
-          password: form.elements.password.value,
-        });
-      form.elements.password.value = '';
+      const session = await api('POST', 'auth/license-login', {
+        licenseKey: form.elements.licenseKey.value.trim(),
+      });
       form.elements.licenseKey.value = '';
       if (!slug) {
         // Signed in from /admin with a licence: continue to the restaurant the licence belongs to.
