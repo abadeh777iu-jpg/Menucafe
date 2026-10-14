@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'">
+<title>ساخت دستور حساب فروشنده</title>
+<style>
+  body{font-family:Tahoma,Vazirmatn,sans-serif;max-width:640px;margin:24px auto;padding:0 16px;line-height:1.9;color:#222}
+  label{display:block;margin-top:14px;font-weight:bold}
+  input{width:100%;box-sizing:border-box;padding:10px;font-size:16px;margin-top:4px;border:1px solid #bbb;border-radius:8px;direction:ltr}
+  button{margin-top:16px;padding:12px 18px;font-size:16px;border:0;border-radius:8px;background:#7a4a2a;color:#fff;width:100%}
+  textarea{width:100%;height:120px;margin-top:10px;direction:ltr;font-size:13px;box-sizing:border-box}
+  .msg{color:#b00020;margin-top:10px;min-height:1.5em}
+  .note{background:#fff6e5;padding:10px;border-radius:8px;font-size:14px}
+</style>
+</head>
+<body>
+<h2>ساخت دستور حساب فروشنده</h2>
+<div class="note">
+  این صفحه کاملاً روی همین دستگاه اجرا می‌شود. رمز شما به هیچ سروری فرستاده نمی‌شود.
+  بعد از ساختن دستور، آن را در کنسول D1 کلودفلر اجرا کنید (راهنما پایین صفحه).
+</div>
+<label for="u">نام کاربری فروشنده (لاتین، ۳ تا ۴۰ نویسه)</label>
+<input id="u" value="seller" autocomplete="off">
+<label for="p1">رمز عبور (حداقل ۱۰ نویسه)</label>
+<input id="p1" type="password" autocomplete="new-password">
+<label for="p2">تکرار رمز عبور</label>
+<input id="p2" type="password" autocomplete="new-password">
+<button id="go">ساخت دستور</button>
+<div class="msg" id="msg"></div>
+<textarea id="out" readonly placeholder="دستور اینجا ظاهر می‌شود"></textarea>
+<button id="copy" type="button">کپی دستور</button>
+<h3>مرحلهٔ بعد</h3>
+<ol>
+  <li>وارد داشبورد Cloudflare شوید و به Storage &amp; Databases ← D1 ← menucafe بروید.</li>
+  <li>تب Console را باز کنید، متن دستور را پیست کنید و Execute را بزنید.</li>
+  <li>اگر پیام موفقیت دیدید، به آدرس سایت با <b>/super</b> بروید و با همین نام کاربری و رمز وارد شوید.</li>
+</ol>
+<script>
+(function () {
+  'use strict';
+  var USERNAME_RE = /^[a-z0-9._-]{3,40}$/; // must match cleanUsername in src/store.js
+  var ITERATIONS = 100000;                 // Workers' maximum; never raise it
+  var enc = new TextEncoder();
+
+  function toBase64(bytes) {
+    var s = '';
+    for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+    return btoa(s);
+  }
+
+  async function hashPassword(password) {
+    var salt = crypto.getRandomValues(new Uint8Array(16));
+    var key = await crypto.subtle.importKey('raw', enc.encode(password), 'PBKDF2', false, ['deriveBits']);
+    var bits = await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt: salt, iterations: ITERATIONS }, key, 256);
+    return 'pbkdf2_sha256$' + ITERATIONS + '$' + toBase64(salt) + '$' + toBase64(new Uint8Array(bits));
+  }
+
+  function sqlText(v) { return "'" + String(v).replace(/'/g, "''") + "'"; }
+
+  async function buildSql(username, password) {
+    var hash = await hashPassword(password);
+    var now = Math.floor(Date.now() / 1000);
+    return 'INSERT INTO super_admins (username, password_hash, created_at) VALUES (' +
+      sqlText(username) + ', ' + sqlText(hash) + ', ' + now + ');';
+  }
+
+  if (typeof module !== 'undefined') module.exports = { buildSql: buildSql, hashPassword: hashPassword };
+
+  var msg = document.getElementById('msg');
+  var out = document.getElementById('out');
+  document.getElementById('go').onclick = async function () {
+    msg.textContent = ''; out.value = '';
+    var username = document.getElementById('u').value.trim().toLowerCase();
+    var p1 = document.getElementById('p1').value;
+    var p2 = document.getElementById('p2').value;
+    var len = Array.from(p1).length;
+    if (!USERNAME_RE.test(username)) { msg.textContent = 'نام کاربری باید ۳ تا ۴۰ نویسهٔ لاتین، عدد، نقطه، خط تیره یا زیرخط باشد.'; return; }
+    if (len < 10 || len > 200) { msg.textContent = 'رمز باید بین ۱۰ تا ۲۰۰ نویسه باشد.'; return; }
+    if (p1 !== p2) { msg.textContent = 'دو رمز یکسان نیستند.'; return; }
+    msg.textContent = 'در حال ساخت... چند ثانیه صبر کنید.';
+    out.value = await buildSql(username, p1);
+    msg.textContent = 'دستور ساخته شد. آن را کپی کنید.';
+    document.getElementById('p1').value = ''; document.getElementById('p2').value = '';
+  };
+  document.getElementById('copy').onclick = function () {
+    out.select();
+    navigator.clipboard ? navigator.clipboard.writeText(out.value) : document.execCommand('copy');
+    msg.textContent = 'کپی شد.';
+  };
+})();
+</script>
+</body>
+</html>
