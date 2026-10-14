@@ -14,7 +14,8 @@ const MAX_BODY_BYTES = 64 * 1024;
 const STATIC = new Set([
   '/atmosphere-art.js', '/atmosphere-effects.js', '/atmosphere.css', '/winter-art.js', '/winter-effects.js',
   '/winter.css', '/seasonal-art.js', '/seasonal.css', '/themes.js', '/themes.css', '/styles.css', '/app.js',
-  '/menu-data.js', '/assets/Vazirmatn.woff2', '/assets/OFL.txt',
+  '/menu-data.js', '/welcome.js', '/welcome.css', '/lively.js', '/lively.css',
+  '/assets/Vazirmatn.woff2', '/assets/OFL.txt',
 ]);
 const PAGE_FILES = new Set(['/admin.html', '/admin.js', '/admin.css', '/super.html', '/super.js']);
 const SLUG = '[a-z0-9][a-z0-9-]{1,39}';

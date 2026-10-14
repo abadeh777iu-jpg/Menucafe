@@ -281,6 +281,17 @@ describe('owner writes', () => {
     await aria.write('PUT', '/api/admin/aria/profile', { headline: 'طعم اصیل، حالِ خوب.' });
   });
 
+  test('welcome line is saved per restaurant, shown publicly, and limited in length', async () => {
+    const text = 'خوش آمدید؛ امروز چه می‌خورید؟';
+    const saved = await aria.write('PUT', '/api/admin/aria/profile', { welcomeMessage: text });
+    assert.equal(saved.body.restaurant.welcomeMessage, text);
+    assert.equal((await publicMenu('aria')).restaurant.welcomeMessage, text);
+    assert.equal((await publicMenu('bahar')).restaurant.welcomeMessage.length > 0, true);
+    const tooLong = await aria.write('PUT', '/api/admin/aria/profile', { welcomeMessage: 'x'.repeat(161) });
+    assert.equal(tooLong.status, 400);
+    await aria.write('PUT', '/api/admin/aria/profile', { welcomeMessage: 'امروز چه طعمی در سر دارید؟ منوی آریا را با آرامش مرور کنید.' });
+  });
+
   test('preview is owner-only and injects the chosen theme into the response only', async () => {
     const anonymous = await new Client().request('GET', '/admin/aria/preview?theme=winter');
     assert.equal(anonymous.status, 302);

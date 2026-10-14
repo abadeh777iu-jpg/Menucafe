@@ -20,7 +20,7 @@
     { name: 'قلیان', icon: 'leaf' }, { name: 'صبحانه', icon: 'bowl' },
     { name: 'سالاد', icon: 'leaf' }, { name: 'پیش‌غذا', icon: 'kebab' },
   ];
-  const PROFILE_FIELDS = ['name', 'englishName', 'mark', 'headline', 'note', 'description', 'footer'];
+  const PROFILE_FIELDS = ['name', 'englishName', 'mark', 'headline', 'note', 'description', 'footer', 'welcomeMessage'];
 
   let csrf = '';
   let view = null;

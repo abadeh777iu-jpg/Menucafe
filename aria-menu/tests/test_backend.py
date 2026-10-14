@@ -140,7 +140,7 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(self.admin_view(self.logged_in('aria.owner'), 'aria')['restaurant']['defaultTheme'], 'winter')
         self.assertEqual(self.admin_view(self.logged_in('bahar.owner'), 'bahar')['restaurant']['defaultTheme'], 'default')
         self.assertEqual(set(aria['restaurant']), {'slug', 'name', 'englishName', 'mark', 'headline', 'note',
-                                                    'description', 'footer', 'theme'})
+                                                    'description', 'footer', 'welcomeMessage', 'theme'})
         self.assertEqual(set(aria['items'][0]), {'id', 'name', 'category', 'description', 'ingredients',
                                                   'allergens', 'price', 'icon', 'label'})
 

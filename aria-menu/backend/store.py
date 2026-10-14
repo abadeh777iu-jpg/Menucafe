@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
   note TEXT NOT NULL DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
   footer TEXT NOT NULL DEFAULT '',
+  welcome_message TEXT NOT NULL DEFAULT '',
   theme TEXT NOT NULL DEFAULT 'default',
   manual_theme TEXT,
   created_at INTEGER NOT NULL,
@@ -246,6 +247,8 @@ def migrate(conn):
         columns = {row['name'] for row in conn.execute('PRAGMA table_info(restaurants)')}
         if 'manual_theme' not in columns:
             conn.execute('ALTER TABLE restaurants ADD COLUMN manual_theme TEXT')
+        if 'welcome_message' not in columns:
+            conn.execute("ALTER TABLE restaurants ADD COLUMN welcome_message TEXT NOT NULL DEFAULT ''")
 
 
 def ensure_rules(conn, slug):
@@ -267,10 +270,11 @@ def seed_restaurant(conn, data):
     theme = clean_theme(info.get('theme', 'default'))
     stamp = now()
     conn.execute(
-        'INSERT INTO restaurants (slug, name, english_name, mark, headline, note, description, footer, theme, created_at, updated_at)'
-        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO restaurants (slug, name, english_name, mark, headline, note, description, footer, welcome_message, theme, created_at, updated_at)'
+        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         (slug, info['name'], info.get('englishName', ''), info.get('mark', ''), info.get('headline', ''),
-         info.get('note', ''), info.get('description', ''), info.get('footer', ''), theme, stamp, stamp),
+         info.get('note', ''), info.get('description', ''), info.get('footer', ''),
+         info.get('welcomeMessage', ''), theme, stamp, stamp),
     )
     for position, category in enumerate(data['categories']):
         conn.execute(
@@ -395,7 +399,7 @@ def public_menu(conn, slug, now=None):
         'restaurant': {
             'slug': row['slug'], 'name': row['name'], 'englishName': row['english_name'], 'mark': row['mark'],
             'headline': row['headline'], 'note': row['note'], 'description': row['description'],
-            'footer': row['footer'], 'theme': active['theme'],
+            'footer': row['footer'], 'welcomeMessage': row['welcome_message'], 'theme': active['theme'],
         },
         'categories': [{'id': c['id'], 'name': c['name'], 'icon': c['icon']} for c in categories],
         'items': [
@@ -447,7 +451,8 @@ def admin_view(conn, slug, now=None):
         'restaurant': {
             'slug': row['slug'], 'name': row['name'], 'englishName': row['english_name'], 'mark': row['mark'],
             'headline': row['headline'], 'note': row['note'], 'description': row['description'],
-            'footer': row['footer'], 'theme': row['theme'], 'defaultTheme': row['theme'],
+            'footer': row['footer'], 'welcomeMessage': row['welcome_message'], 'theme': row['theme'],
+            'defaultTheme': row['theme'],
             'manualTheme': row['manual_theme'],
         },
         'categories': [
@@ -497,10 +502,11 @@ PROFILE_LIMITS = {
     'note': ('متن کوتاه بالای منو', 0, 160, False),
     'description': ('توضیحات', 0, 400, True),
     'footer': ('متن پایین صفحه', 0, 160, False),
+    'welcomeMessage': ('پیام خوش‌آمدید', 0, 160, False),
 }
 PROFILE_COLUMNS = {
     'name': 'name', 'englishName': 'english_name', 'mark': 'mark', 'headline': 'headline',
-    'note': 'note', 'description': 'description', 'footer': 'footer',
+    'note': 'note', 'description': 'description', 'footer': 'footer', 'welcomeMessage': 'welcome_message',
 }
 
 

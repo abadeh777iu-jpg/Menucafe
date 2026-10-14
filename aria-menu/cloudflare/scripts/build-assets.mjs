@@ -13,6 +13,7 @@ const FILES = [
   'styles.css', 'themes.css', 'themes.js', 'seasonal.css', 'seasonal-art.js',
   'winter.css', 'winter-art.js', 'winter-effects.js',
   'atmosphere.css', 'atmosphere-art.js', 'atmosphere-effects.js',
+  'welcome.js', 'welcome.css', 'lively.js', 'lively.css',
 ];
 const DIRECTORIES = ['assets'];
 

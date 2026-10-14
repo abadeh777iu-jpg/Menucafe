@@ -173,7 +173,7 @@ export async function publicMenu(db, slug, moment) {
     restaurant: {
       slug: row.slug, name: row.name, englishName: row.english_name, mark: row.mark,
       headline: row.headline, note: row.note, description: row.description,
-      footer: row.footer, theme: active.theme,
+      footer: row.footer, welcomeMessage: row.welcome_message, theme: active.theme,
     },
     categories: categories.map((c) => ({ id: c.id, name: c.name, icon: c.icon })),
     items: items.map((i) => ({
@@ -206,7 +206,8 @@ export async function adminView(db, slug, moment) {
     restaurant: {
       slug: row.slug, name: row.name, englishName: row.english_name, mark: row.mark,
       headline: row.headline, note: row.note, description: row.description,
-      footer: row.footer, theme: row.theme, defaultTheme: row.theme, manualTheme: row.manual_theme,
+      footer: row.footer, welcomeMessage: row.welcome_message, theme: row.theme, defaultTheme: row.theme,
+      manualTheme: row.manual_theme,
     },
     categories: categories.map((c) => ({
       id: c.id, name: c.name, icon: c.icon, position: c.position, enabled: !!c.enabled,
@@ -251,10 +252,11 @@ const PROFILE_LIMITS = {
   note: ['متن کوتاه بالای منو', 0, 160, false],
   description: ['توضیحات', 0, 400, true],
   footer: ['متن پایین صفحه', 0, 160, false],
+  welcomeMessage: ['پیام خوش‌آمدید', 0, 160, false],
 };
 const PROFILE_COLUMNS = {
   name: 'name', englishName: 'english_name', mark: 'mark', headline: 'headline',
-  note: 'note', description: 'description', footer: 'footer',
+  note: 'note', description: 'description', footer: 'footer', welcomeMessage: 'welcome_message',
 };
 
 export async function updateProfile(db, slug, payload) {
