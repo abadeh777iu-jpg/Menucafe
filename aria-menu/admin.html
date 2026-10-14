@@ -27,13 +27,10 @@
 
   <section id="login-view" class="panel login-panel" hidden>
     <h1>ورود به پنل مدیریت</h1>
-    <p class="muted">با نام کاربری و رمز عبور اختصاصی رستوران خود وارد شوید.</p>
-    <form id="login-form" class="stack" autocomplete="on">
-      <label>نام کاربری
-        <input name="username" type="text" autocomplete="username" required maxlength="40" dir="ltr">
-      </label>
-      <label>رمز عبور
-        <input name="password" type="password" autocomplete="current-password" required maxlength="200" dir="ltr">
+    <p class="muted">کلید لایسنسی را که از طرف فروشنده به شما داده شده وارد کنید.</p>
+    <form id="login-form" class="stack" autocomplete="off">
+      <label>کلید لایسنس
+        <input name="licenseKey" type="text" required maxlength="40" dir="ltr" placeholder="MCF-XXXX-XXXX-XXXX-XXXX" spellcheck="false" autocapitalize="characters">
       </label>
       <button class="btn primary" type="submit">ورود</button>
       <p class="form-msg" data-msg role="status"></p>
@@ -47,6 +44,7 @@
       <a href="#schedule-panel">برنامهٔ تم</a>
       <a href="#category-panel">دسته‌بندی‌ها</a>
       <a href="#item-panel">غذاها</a>
+      <a href="#users-panel">کاربران</a>
       <a href="#account-panel">حساب کاربری</a>
     </nav>
 
@@ -60,6 +58,7 @@
         <label class="wide">متن کوتاه بالای منو <input name="note" maxlength="160"></label>
         <label class="wide">توضیحات <textarea name="description" rows="3" maxlength="400"></textarea></label>
         <label class="wide">متن پایین صفحه <input name="footer" maxlength="160"></label>
+        <label class="wide">پیام خوش‌آمدید (زیر عنوان «خوش آمدید به ‹نام رستوران›» در بالای منو نمایش داده می‌شود) <input name="welcomeMessage" maxlength="160"></label>
         <div class="wide actions">
           <button class="btn primary" type="submit">ذخیرهٔ اطلاعات</button>
           <a class="btn ghost" data-public-link href="/">مشاهدهٔ منو</a>
@@ -157,9 +156,49 @@
       </form>
     </section>
 
+    <section class="panel" id="users-panel">
+      <h2>کاربران این رستوران</h2>
+      <p class="muted">هر کاربر این فهرست به همین رستوران دسترسی کامل دارد و فقط به همین رستوران دسترسی دارد. حساب خودتان را از اینجا نمی‌توانید حذف کنید؛ رمز خودتان را از بخش «حساب کاربری» عوض کنید.</p>
+      <div id="user-list" class="list"></div>
+      <form id="user-form" class="grid-form" autocomplete="off">
+        <h3 class="wide">افزودن کاربر تازه</h3>
+        <label>نام کاربری
+          <input name="username" required minlength="3" maxlength="40" pattern="[A-Za-z0-9._\-]+" autocomplete="off" dir="ltr">
+        </label>
+        <label>رمز عبور اولیه
+          <input name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+        </label>
+        <label class="wide">تکرار رمز عبور اولیه
+          <input name="confirmPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+        </label>
+        <p class="muted wide">نام کاربری فقط حروف لاتین، عدد، نقطه، خط تیره یا زیرخط دارد. کاربر تازه را از رمزی که اینجا می‌گذارید مطلع کنید.</p>
+        <div class="wide actions">
+          <button class="btn primary" type="submit">افزودن کاربر</button>
+        </div>
+        <p class="form-msg wide" data-msg role="status"></p>
+      </form>
+      <form id="user-password-form" class="grid-form" autocomplete="off">
+        <h3 class="wide">تغییر رمز کاربر دیگر</h3>
+        <label class="wide">کاربر
+          <select name="userId" required></select>
+        </label>
+        <label>رمز عبور تازه
+          <input name="newPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+        </label>
+        <label>تکرار رمز عبور تازه
+          <input name="confirmPassword" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+        </label>
+        <p class="muted wide">با تغییر رمز، همهٔ نشست‌های باز آن کاربر خاتمه می‌یابد.</p>
+        <div class="wide actions">
+          <button class="btn primary" type="submit">تغییر رمز</button>
+        </div>
+        <p class="form-msg wide" data-msg role="status"></p>
+      </form>
+    </section>
+
     <section class="panel" id="account-panel">
       <h2>حساب کاربری</h2>
-      <p class="muted">حساب شما فقط به این رستوران دسترسی دارد. ساخت حساب مدیر جدید از خط فرمان سرور انجام می‌شود.</p>
+      <p class="muted">حساب شما فقط به این رستوران دسترسی دارد. برای افزودن یا حذف کاربران دیگر از بخش «کاربران این رستوران» استفاده کنید.</p>
       <form id="password-form" class="grid-form" autocomplete="off">
         <label class="wide">رمز عبور فعلی
           <input name="currentPassword" type="password" autocomplete="current-password" required maxlength="200" dir="ltr">

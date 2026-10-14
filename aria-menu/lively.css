@@ -1,0 +1,48 @@
+/* Livelier menu page (see lively.js). Every animation is inside prefers-reduced-motion:no-preference.
+   Hover and press feedback only applies on devices that have a pointer, and to the layout that is already there. */
+.lv-progress{position:fixed;top:0;left:0;right:0;height:3px;z-index:70;background:linear-gradient(to left,var(--orange),var(--green));transform-origin:100% 50%;transform:scaleX(var(--lv-progress,0));pointer-events:none}
+.navigation{transition:box-shadow .35s ease}
+.navigation.is-stuck{box-shadow:0 12px 26px -20px rgba(41,60,51,.55)}
+.search{transition:border-color .25s,box-shadow .25s}
+.search:focus-within{border-color:var(--orange);box-shadow:0 0 0 4px color-mix(in srgb,var(--orange) 14%,transparent)}
+@media (prefers-reduced-motion:no-preference){
+  /* Hero: text rises in, a soft glow drifts behind it. */
+  .hero-text>*{animation:lvRise .9s cubic-bezier(.2,.8,.2,1) both}
+  .hero-text>:nth-child(2){animation-delay:.08s}
+  .hero-text>:nth-child(3){animation-delay:.16s}
+  .hero-text>:nth-child(4){animation-delay:.24s}
+  .hero-text>:nth-child(5){animation-delay:.32s}
+  .hero-text>:nth-child(6){animation-delay:.4s}
+  .hero{position:relative;isolation:isolate}
+  .hero::before{content:'';position:absolute;inset:-18% -8%;z-index:-1;pointer-events:none;background:radial-gradient(40% 50% at 18% 35%,color-mix(in srgb,var(--theme-leaf,#a8b69b) 34%,transparent),transparent 70%),radial-gradient(34% 44% at 82% 70%,color-mix(in srgb,var(--orange) 20%,transparent),transparent 70%);animation:lvDrift 16s ease-in-out infinite alternate}
+  .brand-mark{animation:lvBreathe 4.5s ease-in-out infinite}
+  .sample i{animation:lvPing 2.2s ease-out infinite}
+  /* Tabs: the chosen one gives a small bounce. */
+  .tab[aria-pressed=true]{animation:lvPop .4s cubic-bezier(.2,.9,.3,1.3)}
+  .tab:active{transform:scale(.95)}
+  .tab{transition:transform .2s,background-color .25s,color .25s}
+  /* Reveal (JavaScript adds .lv-reveal and .is-in). */
+  .lv .lv-reveal{opacity:0;transform:translateY(24px);transition:opacity .6s var(--d,0ms) ease,transform .75s var(--d,0ms) cubic-bezier(.2,.8,.2,1)}
+  .lv .lv-reveal.is-in{opacity:1;transform:none}
+  .lv .lv-reveal.lv-instant{transition:none}
+  .lv .section.is-in .section-head:after{animation:lvDraw .9s .15s cubic-bezier(.2,.8,.2,1) both}
+  .section-head:after{transform-origin:100% 50%}
+  /* Cards: lift and icon wiggle on hover; press shrinks a little. */
+  .card{transition:transform .35s cubic-bezier(.2,.8,.2,1),box-shadow .35s ease,border-color .35s ease}
+  .lv .card.is-in:hover{transform:translateY(-5px);box-shadow:0 22px 44px -26px rgba(41,60,51,.42);border-color:var(--theme-outline,#d8ddce)}
+  .lv .card.is-in:active{transform:scale(.99)}
+  .card .food-icon{transition:transform .4s cubic-bezier(.2,.9,.3,1.4)}
+  .card:hover .food-icon{transform:rotate(-7deg) scale(1.06)}
+  .card .price{transition:transform .35s cubic-bezier(.2,.9,.3,1.3);transform-origin:0 50%}
+  .card:hover .price{transform:scale(1.07)}
+  /* Empty state button and tab hover are gentle, not jumpy. */
+  .empty button{transition:transform .2s,box-shadow .2s}
+  .empty button:hover{transform:translateY(-2px);box-shadow:0 10px 20px -14px rgba(41,60,51,.5)}
+}
+@keyframes lvRise{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
+@keyframes lvDrift{from{transform:translate3d(-2%,-1%,0) scale(1)}to{transform:translate3d(3%,2%,0) scale(1.06)}}
+@keyframes lvBreathe{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes lvPing{0%{box-shadow:0 0 0 0 color-mix(in srgb,currentColor 45%,transparent)}100%{box-shadow:0 0 0 7px transparent}}
+@keyframes lvPop{0%{transform:scale(.92)}60%{transform:scale(1.04)}100%{transform:scale(1)}}
+@keyframes lvDraw{from{transform:scaleX(0)}to{transform:scaleX(1)}}
+@media (prefers-reduced-motion:reduce){.lv-progress{display:none}}

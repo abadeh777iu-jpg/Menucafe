@@ -20,10 +20,11 @@
     { name: 'قلیان', icon: 'leaf' }, { name: 'صبحانه', icon: 'bowl' },
     { name: 'سالاد', icon: 'leaf' }, { name: 'پیش‌غذا', icon: 'kebab' },
   ];
-  const PROFILE_FIELDS = ['name', 'englishName', 'mark', 'headline', 'note', 'description', 'footer'];
+  const PROFILE_FIELDS = ['name', 'englishName', 'mark', 'headline', 'note', 'description', 'footer', 'welcomeMessage'];
 
   let csrf = '';
   let view = null;
+  let currentUsername = '';
   const tracked = new Map(); // form -> serialized values at the last load or save
 
   // ----- small helpers ----------------------------------------------------------
@@ -670,6 +671,89 @@
     }
   }
 
+  // ----- users of this restaurant ------------------------------------------------------
+
+  const userDate = new Intl.DateTimeFormat('fa-IR-u-ca-persian', { year: 'numeric', month: 'long', day: 'numeric', timeZone: 'Asia/Tehran' });
+
+  function renderUsers() {
+    const users = (view && view.users) || [];
+    const list = $('#user-list');
+    list.replaceChildren(...users.map(user => {
+      const isMe = user.username === currentUsername;
+      return el('div', { class: 'row' },
+        el('div', { class: 'row-main' },
+          el('strong', { text: isMe ? `${user.username} (شما)` : user.username, dir: 'ltr' }),
+          el('small', { text: `ساخته‌شده: ${userDate.format(new Date(user.createdAt * 1000))}` })),
+        el('div', { class: 'row-tools' },
+          isMe ? null : el('button', { class: 'btn small danger', type: 'button', text: 'حذف کاربر', onclick: () => deleteUser(user) })));
+    }));
+    const select = $('#user-password-form').elements.userId;
+    const previous = select.value;
+    fillSelect(select, users.filter(user => user.username !== currentUsername)
+      .map(user => ({ value: String(user.id), label: user.username })), previous);
+    if (!select.value && select.options.length) select.selectedIndex = 0;
+  }
+
+  async function addUser(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    await saveOnce(form, async () => {
+      if (form.elements.password.value !== form.elements.confirmPassword.value) {
+        report(form, 'رمز عبور و تکرار آن یکسان نیستند.', 'error');
+        return;
+      }
+      try {
+        const username = form.elements.username.value.trim();
+        view = await api('POST', `${base()}/users`, {
+          username,
+          password: form.elements.password.value,
+        });
+        form.reset();
+        renderLive();
+        report(form, `کاربر «${username.toLowerCase()}» ساخته شد. رمز اولیه را به او بدهید.`);
+      } catch (error) {
+        report(form, error.message, 'error');
+      }
+    });
+  }
+
+  async function resetUserPassword(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    await saveOnce(form, async () => {
+      if (!form.elements.userId.value) {
+        report(form, 'کاربری برای تغییر رمز انتخاب نشده است.', 'error');
+        return;
+      }
+      if (form.elements.newPassword.value !== form.elements.confirmPassword.value) {
+        report(form, 'رمز عبور تازه و تکرار آن یکسان نیستند.', 'error');
+        return;
+      }
+      const name = form.elements.userId.selectedOptions[0].textContent;
+      try {
+        view = await api('POST', `${base()}/users/${encodeURIComponent(form.elements.userId.value)}/password`, {
+          password: form.elements.newPassword.value,
+        });
+        form.reset();
+        renderLive();
+        report(form, `رمز «${name}» تغییر کرد و نشست‌های باز آن خاتمه یافتند.`);
+      } catch (error) {
+        report(form, error.message, 'error');
+      }
+    });
+  }
+
+  async function deleteUser(user) {
+    if (!window.confirm(`حساب «${user.username}» حذف شود؟ این کار برگشت‌پذیر نیست و همهٔ نشست‌های آن خاتمه می‌یابد.`)) return;
+    try {
+      view = await api('DELETE', `${base()}/users/${encodeURIComponent(user.id)}`);
+      renderLive();
+      say(`حساب «${user.username}» حذف شد.`);
+    } catch (error) {
+      say(error.message, 'error');
+    }
+  }
+
   // ----- account ----------------------------------------------------------------------
 
   async function changePassword(event) {
@@ -753,6 +837,7 @@
     renderCategories();
     renderItemFilter();
     renderItems();
+    renderUsers();
     refreshScheduleStatus();
   }
 
@@ -778,11 +863,15 @@
     const button = $('button[type=submit]', form);
     button.disabled = true;
     try {
-      const session = await api('POST', 'auth/login', {
-        username: form.elements.username.value,
-        password: form.elements.password.value,
+      const session = await api('POST', 'auth/license-login', {
+        licenseKey: form.elements.licenseKey.value.trim(),
       });
-      form.elements.password.value = '';
+      form.elements.licenseKey.value = '';
+      if (!slug) {
+        // Signed in from /admin with a licence: continue to the restaurant the licence belongs to.
+        location.assign(`/admin/${encodeURIComponent(session.user.restaurantSlug)}`);
+        return;
+      }
       if (session.user.restaurantSlug !== slug) {
         await api('POST', 'auth/logout').catch(() => {});
         csrf = '';
@@ -790,6 +879,7 @@
         return;
       }
       csrf = session.csrfToken;
+      currentUsername = session.user.username;
       $('#admin-user').textContent = session.user.username;
       showOnly('dashboard');
       await load();
@@ -808,6 +898,7 @@
       await api('POST', 'auth/logout');
     } catch { /* session may already be gone */ }
     csrf = '';
+    currentUsername = '';
     view = null;
     tracked.clear();
     closePreview();
@@ -817,13 +908,21 @@
 
   async function start() {
     if (!slug) {
-      say('آدرس پنل معتبر نیست.', 'error');
+      // /admin without a restaurant: only the licence sign-in is offered here.
+      try {
+        const me = await api('GET', 'auth/me');
+        location.replace(`/admin/${encodeURIComponent(me.user.restaurantSlug)}`);
+      } catch {
+        showOnly('login');
+        say('کلید لایسنس خود را وارد کنید.');
+      }
       return;
     }
     $('#admin-public').href = `/${slug}`;
     try {
       const me = await api('GET', 'auth/me');
       csrf = me.csrfToken;
+      currentUsername = me.user.username;
       $('#admin-user').textContent = me.user.username;
       if (me.user.restaurantSlug !== slug) {
         showOnly('login');
@@ -858,6 +957,8 @@
   $('#item-delete').addEventListener('click', deleteItem);
   $('#item-filter').addEventListener('change', renderItems);
   $('#password-form').addEventListener('submit', changePassword);
+  $('#user-form').addEventListener('submit', addUser);
+  $('#user-password-form').addEventListener('submit', resetUserPassword);
 
   start();
 })();

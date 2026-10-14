@@ -1,6 +1,7 @@
-/* Restaurant theme. The theme is chosen by the restaurant owner in the admin panel and
-   delivered with the menu (menu.restaurant.theme). Customers cannot change it here.
-   Motion follows the device's reduced-motion setting automatically. */
+/* Restaurant theme. The restaurant's manager sets the theme in the admin panel: a default theme,
+   date rules that switch themes automatically, or a manual override. Visitors cannot change it.
+   The theme is delivered with the menu (menu.restaurant.theme). Motion follows the device's
+   reduced-motion setting. */
 (() => {
   'use strict';
   const definitions = [
@@ -42,6 +43,7 @@
       <path d="m73 44 2 6 6 2-6 2-2 6-2-6-6-2 6-2Z" fill="var(--theme-gold)"/>
       <circle cx="202" cy="106" r="3" fill="var(--theme-gold)"/>`)
   };
+  let ownerTheme = 'default';
   function apply(id) {
     const theme = valid.has(id) ? id : 'default';
     document.documentElement.dataset.theme = theme;
@@ -70,8 +72,9 @@
   window.MenuThemes = {
     mount(restaurant) {
       if (!defaultArt) defaultArt = document.querySelector('.hero-art').outerHTML;
-      const chosen = valid.has(previewTheme) ? previewTheme : restaurant.theme;
-      apply(valid.has(chosen) ? chosen : 'default');
+      ownerTheme = valid.has(restaurant.theme) ? restaurant.theme : 'default';
+      // The owner's preview page passes the theme explicitly; public pages always use the owner's theme.
+      apply(valid.has(previewTheme) ? previewTheme : ownerTheme);
     }
   };
 })();

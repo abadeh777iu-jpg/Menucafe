@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="fa" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<title>پنل فروشنده</title>
+<link rel="stylesheet" href="/admin.css">
+<script defer src="/super.js"></script>
+</head>
+<body>
+<header class="admin-top">
+  <div class="admin-wrap admin-top-inner">
+    <div class="admin-id">
+      <strong>پنل فروشنده</strong>
+      <small id="super-user"></small>
+    </div>
+    <div class="admin-actions">
+      <button id="super-logout" class="btn ghost" type="button" hidden>خروج</button>
+    </div>
+  </div>
+</header>
+
+<main class="admin-wrap">
+  <p id="super-status" class="admin-status" role="status" aria-live="polite"></p>
+
+  <section id="super-setup" class="panel login-panel" hidden>
+    <h1>راه‌اندازی حساب فروشنده</h1>
+    <p class="muted">این بار اول است. کد راه‌اندازی را که خودتان در تنظیمات Cloudflare گذاشته‌اید وارد کنید و یک نام کاربری و رمز عبور برای خودتان انتخاب کنید. این بخش فقط یک بار کار می‌کند.</p>
+    <form id="super-setup-form" class="stack" autocomplete="off">
+      <label>کد راه‌اندازی
+        <input name="setupCode" type="password" required minlength="12" maxlength="200" dir="ltr" autocomplete="off">
+      </label>
+      <label>نام کاربری (لاتین، ۳ تا ۴۰ نویسه)
+        <input name="username" type="text" required maxlength="40" dir="ltr" autocomplete="username" value="seller">
+      </label>
+      <label>رمز عبور (حداقل ۱۰ نویسه)
+        <input name="password" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+      </label>
+      <label>تکرار رمز عبور
+        <input name="password2" type="password" autocomplete="new-password" required minlength="10" maxlength="200" dir="ltr">
+      </label>
+      <button class="btn primary" type="submit">ساخت حساب و ورود</button>
+      <p class="form-msg" data-msg role="status"></p>
+    </form>
+  </section>
+
+  <section id="super-login" class="panel login-panel" hidden>
+    <h1>ورود فروشنده</h1>
+    <p class="muted">این صفحه فقط برای مدیریت رستوران‌ها و صدور لایسنس است.</p>
+    <form id="super-login-form" class="stack" autocomplete="on">
+      <label>نام کاربری
+        <input name="username" type="text" autocomplete="username" required maxlength="40" dir="ltr">
+      </label>
+      <label>رمز عبور
+        <input name="password" type="password" autocomplete="current-password" required maxlength="200" dir="ltr">
+      </label>
+      <button class="btn primary" type="submit">ورود</button>
+      <p class="form-msg" data-msg role="status"></p>
+    </form>
+  </section>
+
+  <div id="super-dashboard" hidden>
+    <section class="panel">
+      <h2>رستوران‌ها</h2>
+      <div id="restaurant-list" class="list"></div>
+    </section>
+
+    <section class="panel">
+      <h2>ثبت رستوران تازه</h2>
+      <form id="restaurant-form" class="grid-form" autocomplete="off">
+        <label>آدرس رستوران (حروف لاتین کوچک، عدد و خط تیره)
+          <input name="slug" type="text" required maxlength="40" pattern="[a-z0-9][a-z0-9-]{1,39}" dir="ltr">
+        </label>
+        <label>نام فارسی
+          <input name="name" type="text" required maxlength="80">
+        </label>
+        <label>نام لاتین
+          <input name="englishName" type="text" maxlength="80" dir="ltr">
+        </label>
+        <label>تم پیش‌فرض
+          <select name="theme" id="theme-select"></select>
+        </label>
+        <div class="wide">
+          <button class="btn primary" type="submit">ثبت رستوران</button>
+        </div>
+        <p class="form-msg wide" data-msg role="status"></p>
+      </form>
+    </section>
+
+    <section class="panel" id="license-panel" hidden>
+      <h2>لایسنس‌های <span id="license-restaurant"></span></h2>
+      <div id="new-key" class="status-card" hidden>
+        <strong>کلید تازه (فقط همین یک بار نمایش داده می‌شود)</strong>
+        <code id="new-key-value" dir="ltr"></code>
+        <small>این کلید را به مدیر رستوران بدهید. مدیر با همین کلید وارد پنل خودش می‌شود.</small>
+        <div><button id="copy-key" class="btn small ghost" type="button">کپی کلید</button></div>
+      </div>
+      <div id="license-list" class="list"></div>
+      <form id="license-form" class="grid-form" autocomplete="off">
+        <label>برچسب (مثلاً نام مدیر یا شماره قرارداد)
+          <input name="label" type="text" maxlength="60">
+        </label>
+        <div class="wide">
+          <button class="btn primary" type="submit">صدور لایسنس تازه</button>
+        </div>
+        <p class="form-msg wide" data-msg role="status"></p>
+      </form>
+    </section>
+  </div>
+</main>
+</body>
+</html>

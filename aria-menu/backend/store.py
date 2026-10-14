@@ -55,6 +55,7 @@ CREATE TABLE IF NOT EXISTS restaurants (
   note TEXT NOT NULL DEFAULT '',
   description TEXT NOT NULL DEFAULT '',
   footer TEXT NOT NULL DEFAULT '',
+  welcome_message TEXT NOT NULL DEFAULT '',
   theme TEXT NOT NULL DEFAULT 'default',
   manual_theme TEXT,
   created_at INTEGER NOT NULL,
@@ -105,7 +106,7 @@ CREATE TABLE IF NOT EXISTS theme_rules (
   kind TEXT NOT NULL,
   label TEXT NOT NULL,
   theme TEXT NOT NULL,
-  enabled INTEGER NOT NULL DEFAULT 0,
+  enabled INTEGER NOT NULL DEFAULT 1,
   calendar TEXT NOT NULL,
   start_month INTEGER NOT NULL,
   start_day INTEGER NOT NULL,
@@ -246,16 +247,18 @@ def migrate(conn):
         columns = {row['name'] for row in conn.execute('PRAGMA table_info(restaurants)')}
         if 'manual_theme' not in columns:
             conn.execute('ALTER TABLE restaurants ADD COLUMN manual_theme TEXT')
+        if 'welcome_message' not in columns:
+            conn.execute("ALTER TABLE restaurants ADD COLUMN welcome_message TEXT NOT NULL DEFAULT ''")
 
 
 def ensure_rules(conn, slug):
-    """Create the default schedule rules for a restaurant (disabled). Existing rules are kept."""
+    """Create the default schedule rules for a restaurant (enabled, so themes follow the calendar). Existing rules are kept."""
     stamp = now()
     for position, (key, kind, theme, label, calendar, start, end, priority) in enumerate(schedule.DEFAULT_RULES):
         conn.execute(
             'INSERT OR IGNORE INTO theme_rules (restaurant_slug, key, kind, label, theme, enabled, calendar,'
             ' start_month, start_day, end_month, end_day, priority, timezone, position, updated_at)'
-            ' VALUES (?, ?, ?, ?, ?, 0, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            ' VALUES (?, ?, ?, ?, ?, 1, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
             (slug, key, kind, label, theme, calendar, start[0], start[1], end[0], end[1], priority,
              schedule.TIMEZONE_NAME, position, stamp),
         )
@@ -267,10 +270,11 @@ def seed_restaurant(conn, data):
     theme = clean_theme(info.get('theme', 'default'))
     stamp = now()
     conn.execute(
-        'INSERT INTO restaurants (slug, name, english_name, mark, headline, note, description, footer, theme, created_at, updated_at)'
-        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        'INSERT INTO restaurants (slug, name, english_name, mark, headline, note, description, footer, welcome_message, theme, created_at, updated_at)'
+        ' VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         (slug, info['name'], info.get('englishName', ''), info.get('mark', ''), info.get('headline', ''),
-         info.get('note', ''), info.get('description', ''), info.get('footer', ''), theme, stamp, stamp),
+         info.get('note', ''), info.get('description', ''), info.get('footer', ''),
+         info.get('welcomeMessage', ''), theme, stamp, stamp),
     )
     for position, category in enumerate(data['categories']):
         conn.execute(
@@ -318,6 +322,48 @@ def create_user(conn, username, restaurant_slug, password_hash):
         )
 
 
+def list_users(conn, slug):
+    rows = conn.execute(
+        'SELECT id, username, created_at FROM users WHERE restaurant_slug=? ORDER BY id', (slug,)).fetchall()
+    return [{'id': r['id'], 'username': r['username'], 'createdAt': r['created_at']} for r in rows]
+
+
+def add_user(conn, slug, username, password_hash):
+    """Owner-panel account creation. The new user can only ever act on this restaurant."""
+    try:
+        create_user(conn, username, slug, password_hash)
+    except sqlite3.IntegrityError:
+        raise ApiError('این نام کاربری قبلاً ثبت شده است.', 409)
+
+
+def _user_in_restaurant(conn, slug, user_id):
+    row = conn.execute('SELECT id FROM users WHERE id=? AND restaurant_slug=?', (user_id, slug)).fetchone()
+    if row is None:
+        raise ApiError('کاربر پیدا نشد.', 404)
+
+
+def reset_user_password(conn, slug, user_id, acting_user_id, password_hash):
+    """Set another owner's password and end all of that owner's sessions."""
+    if user_id == acting_user_id:
+        raise ApiError('برای تغییر رمز خودتان از بخش «حساب کاربری» استفاده کنید.', 400)
+    _user_in_restaurant(conn, slug, user_id)
+    with conn:
+        conn.execute('UPDATE users SET password_hash=? WHERE id=? AND restaurant_slug=?',
+                     (password_hash, user_id, slug))
+        conn.execute('DELETE FROM sessions WHERE user_id=?', (user_id,))
+
+
+def delete_user(conn, slug, user_id, acting_user_id):
+    """Remove another owner of this restaurant. The acting user is never deleted here, so at least
+    one owner always remains."""
+    if user_id == acting_user_id:
+        raise ApiError('حساب خودتان را از اینجا نمی‌توانید حذف کنید.', 400)
+    _user_in_restaurant(conn, slug, user_id)
+    with conn:
+        conn.execute('DELETE FROM sessions WHERE user_id=?', (user_id,))
+        conn.execute('DELETE FROM users WHERE id=? AND restaurant_slug=?', (user_id, slug))
+
+
 def set_password(conn, username, password_hash):
     username = clean_username(username)
     with conn:
@@ -353,7 +399,7 @@ def public_menu(conn, slug, now=None):
         'restaurant': {
             'slug': row['slug'], 'name': row['name'], 'englishName': row['english_name'], 'mark': row['mark'],
             'headline': row['headline'], 'note': row['note'], 'description': row['description'],
-            'footer': row['footer'], 'theme': active['theme'],
+            'footer': row['footer'], 'welcomeMessage': row['welcome_message'], 'theme': active['theme'],
         },
         'categories': [{'id': c['id'], 'name': c['name'], 'icon': c['icon']} for c in categories],
         'items': [
@@ -395,6 +441,7 @@ def admin_view(conn, slug, now=None):
         (slug,)).fetchall()
     items = conn.execute(
         'SELECT * FROM items WHERE restaurant_slug=? ORDER BY position, id', (slug,)).fetchall()
+    users = list_users(conn, slug)
     rules = rules_for(conn, slug)
     moment = _moment(now)
     resolution = schedule.resolve(moment, rules, row['theme'], row['manual_theme'])
@@ -404,7 +451,8 @@ def admin_view(conn, slug, now=None):
         'restaurant': {
             'slug': row['slug'], 'name': row['name'], 'englishName': row['english_name'], 'mark': row['mark'],
             'headline': row['headline'], 'note': row['note'], 'description': row['description'],
-            'footer': row['footer'], 'theme': row['theme'], 'defaultTheme': row['theme'],
+            'footer': row['footer'], 'welcomeMessage': row['welcome_message'], 'theme': row['theme'],
+            'defaultTheme': row['theme'],
             'manualTheme': row['manual_theme'],
         },
         'categories': [
@@ -420,6 +468,7 @@ def admin_view(conn, slug, now=None):
             }
             for i in items
         ],
+        'users': users,
         'themes': [{'id': t[0], 'name': t[1], 'hint': t[2]} for t in THEMES],
         'icons': [{'id': i[0], 'name': i[1]} for i in ICONS],
         'activeTheme': {
@@ -453,10 +502,11 @@ PROFILE_LIMITS = {
     'note': ('متن کوتاه بالای منو', 0, 160, False),
     'description': ('توضیحات', 0, 400, True),
     'footer': ('متن پایین صفحه', 0, 160, False),
+    'welcomeMessage': ('پیام خوش‌آمدید', 0, 160, False),
 }
 PROFILE_COLUMNS = {
     'name': 'name', 'englishName': 'english_name', 'mark': 'mark', 'headline': 'headline',
-    'note': 'note', 'description': 'description', 'footer': 'footer',
+    'note': 'note', 'description': 'description', 'footer': 'footer', 'welcomeMessage': 'welcome_message',
 }
 
 

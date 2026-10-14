@@ -1,0 +1,26 @@
+/* Welcome notice (see welcome.js). The island and card morph with CSS transitions;
+   the gooey neck comes from the #wn-goo filter applied to the shape layer only. */
+.wn{position:fixed;top:calc(env(safe-area-inset-top,0px) + 12px);left:50%;transform:translateX(-50%);z-index:60;width:126px;height:37px;max-width:calc(100vw - 24px);font-family:Vazirmatn,Tahoma,sans-serif;direction:rtl;touch-action:pan-y;transition:width .6s cubic-bezier(.2,.9,.25,1.12),height .6s cubic-bezier(.2,.9,.25,1.12)}
+.wn[hidden]{display:none}
+.wn.is-open{width:min(400px,calc(100vw - 24px));height:78px}
+.wn.is-open{filter:drop-shadow(0 12px 22px rgba(16,19,28,.18))}
+.wn-goo{position:absolute;inset:0;filter:url(#wn-goo)}
+.wn-shape{position:absolute;inset:0;border-radius:999px;background:#000;transition:border-radius .6s cubic-bezier(.2,.9,.25,1.12),background-color .45s ease}
+.wn.is-open .wn-shape{border-radius:26px;background:#fff}
+.wn-drop{position:absolute;left:50%;top:50%;width:30px;height:30px;margin:-15px 0 0 -15px;border-radius:50%;background:linear-gradient(#000,#fff);opacity:0;transform:scale(0)}
+.wn.is-open .wn-drop{animation:wnDrop .9s cubic-bezier(.3,.7,.3,1) .05s both}
+@keyframes wnDrop{0%{transform:translateY(-8px) scale(.3);opacity:1}45%{transform:translateY(24px) scale(1);opacity:1}100%{transform:translateY(40px) scale(.1);opacity:0}}
+.wn-card{position:absolute;inset:0;display:flex;align-items:center;gap:12px;padding:0 12px 0 16px;color:#293c33;opacity:0;filter:blur(8px);transform:scale(.96);transition:opacity .2s,filter .2s,transform .2s}
+.wn.is-open .wn-card{opacity:1;filter:blur(0);transform:none;transition:opacity .45s .26s,filter .5s .26s,transform .6s .26s cubic-bezier(.2,.9,.25,1.12)}
+.wn.is-leaving .wn-card{opacity:0;filter:blur(6px);transition:opacity .16s,filter .16s}
+.wn-mark{flex-shrink:0;width:38px;height:41px;border-radius:20px 20px 8px 8px;background:#314b3c;color:#f8f6e9;display:grid;place-items:center;font-size:20px;line-height:1}
+.wn-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.wn-title{font-size:14px;font-weight:650;color:#293c33;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.wn-message{font-size:12px;line-height:1.7;color:#68736a;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.wn-close{flex-shrink:0;width:30px;height:30px;border:0;border-radius:50%;background:#eef0e8;color:#5c6d59;font-size:19px;line-height:1;cursor:pointer}
+.wn-close:hover{background:#e2e6d8}
+.wn-close:focus-visible{outline:3px solid #b9683d;outline-offset:3px}
+@media (prefers-reduced-motion:reduce){
+  .wn,.wn *{transition-duration:.01ms!important;animation:none!important}
+  .wn-drop{display:none}
+}

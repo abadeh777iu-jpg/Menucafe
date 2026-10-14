@@ -1,0 +1,30 @@
+{
+  // Cloudflare Worker for the menu site and owner panels.
+  // Static files come from ./public (built from ../ by `npm run build`).
+  "name": "menucafe",
+  "main": "src/worker.js",
+  "compatibility_date": "2025-08-01",
+  "assets": {
+    "directory": "./public",
+    "binding": "ASSETS",
+    // The Worker decides which path is a page; assets are only served when it asks for them.
+    "html_handling": "none",
+    "not_found_handling": "none",
+    "run_worker_first": true
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "menucafe",
+      // The ID of the D1 database named menucafe in the Cloudflare account (from `npx wrangler d1 list`).
+      "database_id": "897304af-9c30-4d16-8f0c-8272c3fa9588",
+      "migrations_dir": "migrations"
+    }
+  ],
+  "vars": {
+    // PBKDF2 cost for new passwords. Workers refuses anything above 100000 on every plan (src/security.js).
+    // Each password check costs roughly 20 ms of CPU, which is above the free plan's 10 ms limit;
+    // see README before deploying.
+    "PASSWORD_ITERATIONS": "100000"
+  }
+}

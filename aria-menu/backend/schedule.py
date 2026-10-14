@@ -31,7 +31,7 @@ GREGORIAN_MONTH_NAMES = ('ژانویه', 'فوریه', 'مارس', 'آوریل',
                          'اکتبر', 'نوامبر', 'دسامبر')
 
 # key, kind, theme, label, calendar, start (month, day), end (month, day), priority, list position.
-# Default rules are created disabled, so a restaurant only changes theme after its manager opts in.
+# Default rules are created enabled: each theme switches on its own dates. A manager can still turn one off.
 DEFAULT_RULES = (
     ('spring', 'seasonal', 'spring', 'بهار', 'jalali', (1, 1), (3, 31), 40),
     ('summer', 'seasonal', 'summer', 'تابستان', 'jalali', (4, 1), (6, 31), 40),

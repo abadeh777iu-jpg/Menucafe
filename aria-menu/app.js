@@ -49,6 +49,7 @@ async function init(){const version=++loadVersion;try{
  document.querySelector('#categories').onclick=event=>{const btn=event.target.closest('[data-category]');if(!btn)return;active=btn.dataset.category;updateTabs();renderMenu();btn.scrollIntoView({block:'nearest',inline:'nearest',behavior:'smooth'});document.querySelector('#menu-start').scrollIntoView({block:'start',behavior:'smooth'});};
  document.querySelector('#search').oninput=event=>{query=event.target.value;renderMenu();};
  renderMenu();
+ window.WelcomeNotice?.show(menu.restaurant);
  }catch(error){if(version!==loadVersion)return;document.querySelector('#menu-content').innerHTML='<p class="empty">نمایش منو با مشکل روبه‌رو شد. لطفاً صفحه را دوباره باز کنید.</p>';console.error(error);}}
 init();
 if(window.DemoRoute)window.addEventListener('hashchange',init);

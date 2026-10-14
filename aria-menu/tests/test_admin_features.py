@@ -636,7 +636,8 @@ class ScheduledPublicMenuTests(unittest.TestCase):
 
     def test_event_schedule_selects_valentine_and_manual_override_wins(self):
         port, owner = self.start('2026-02-14T12:00')
-        self.assertEqual(self.public_theme(port), 'summer')  # aria's default; rules start disabled
+        owner.write('PUT', '/api/admin/aria/schedule/valentine', {'enabled': False})
+        self.assertEqual(self.public_theme(port), 'winter')  # 14 Feb is inside the winter season; valentine is off here
         owner.write('PUT', '/api/admin/aria/schedule/valentine', {
             'enabled': True, 'calendar': 'gregorian', 'theme': 'valentine',
             'startMonth': 2, 'startDay': 13, 'endMonth': 2, 'endDay': 15, 'priority': 60})
@@ -655,6 +656,200 @@ class ScheduledPublicMenuTests(unittest.TestCase):
         self.assertEqual(self.public_theme(port), 'winter')
         status, payload, _, _ = Client(port).request('GET', '/api/restaurants/aria/menu')
         self.assertEqual(status, 200)
+
+
+
+class UserManagementTests(unittest.TestCase):
+    """Owner-panel user management on a real server: add, reset password, delete.
+    Seeded accounts: aria.owner (aria) and bahar.owner (bahar). Each test creates its own colleagues."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.TemporaryDirectory()
+        cls.db = str(Path(cls.tmp.name) / 'users.db')
+        cls.port = free_port()
+        env = dict(os.environ)
+
+        def run(*args, stdin=None):
+            result = subprocess.run([sys.executable, 'server.py', '--db', cls.db, *args], cwd=ROOT,
+                                    input=stdin, capture_output=True, text=True, env=env, timeout=120)
+            if result.returncode != 0:
+                raise AssertionError(result.stderr or result.stdout)
+
+        run('init')
+        run('add-user', '--restaurant', 'aria', '--username', 'aria.owner', '--password-stdin', stdin=PASSWORD + '\n')
+        run('add-user', '--restaurant', 'bahar', '--username', 'bahar.owner', '--password-stdin', stdin=PASSWORD + '\n')
+        cls.server = subprocess.Popen([sys.executable, 'server.py', '--db', cls.db, '--port', str(cls.port)],
+                                      cwd=ROOT, env=env, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        for _ in range(100):
+            try:
+                Client(cls.port).request('GET', '/aria')
+                break
+            except OSError:
+                import time
+                time.sleep(0.1)
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.server.terminate()
+        cls.server.wait(timeout=10)
+        cls.tmp.cleanup()
+
+    def login(self, username, password=PASSWORD):
+        client = Client(self.port)
+        status, payload, _ = client.login(username, password)
+        return client, status
+
+    def owner(self, username, password=PASSWORD):
+        client, status = self.login(username, password)
+        self.assertEqual(status, 200)
+        return client
+
+    def users_of(self, client, slug):
+        status, payload, _, _ = client.request('GET', f'/api/admin/{slug}')
+        self.assertEqual(status, 200, payload)
+        return {u['username']: u['id'] for u in payload['users']}
+
+    def new_colleague(self, aria, label):
+        """Create a fresh aria account through the panel API and return its username."""
+        username = f'{label}-{os.urandom(3).hex()}'
+        status, payload, _, _ = aria.request('POST', '/api/admin/aria/users',
+                                             {'username': username, 'password': PASSWORD},
+                                             headers={'X-CSRF-Token': aria.csrf})
+        self.assertEqual(status, 201, payload)
+        return username
+
+    def test_user_list_is_per_restaurant_and_has_no_secrets(self):
+        aria = self.owner('aria.owner')
+        colleague = self.new_colleague(aria, 'listed')
+        status, payload, _, _ = aria.request('GET', '/api/admin/aria')
+        self.assertEqual(status, 200)
+        names = {u['username'] for u in payload['users']}
+        self.assertIn('aria.owner', names)
+        self.assertIn(colleague, names)
+        self.assertNotIn('bahar.owner', names)
+        self.assertNotIn('pbkdf2', str(payload))
+        self.assertFalse(any('password' in key.lower() for user in payload['users'] for key in user))
+
+    def test_add_user_creates_an_account_only_for_this_restaurant(self):
+        aria = self.owner('aria.owner')
+        status, payload, _, _ = aria.request('POST', '/api/admin/aria/users',
+                                             {'username': 'Aria.Staff', 'password': 'staff-pass-123'},
+                                             headers={'X-CSRF-Token': aria.csrf})
+        self.assertEqual(status, 201, payload)
+        self.assertIn('aria.staff', {u['username'] for u in payload['users']})
+        staff, status = self.login('aria.staff', 'staff-pass-123')
+        self.assertEqual(status, 200)
+        self.assertEqual(staff.request('GET', '/api/admin/aria')[0], 200)
+        self.assertEqual(staff.request('GET', '/api/admin/bahar')[0], 403)
+
+    def test_add_user_validates_input_and_refuses_duplicates(self):
+        aria = self.owner('aria.owner')
+        headers = {'X-CSRF-Token': aria.csrf}
+        taken = self.new_colleague(aria, 'taken')
+        cases = [
+            ({'username': 'ok.name', 'password': 'short'}, 400),
+            ({'username': 'ab', 'password': PASSWORD}, 400),
+            ({'username': 'bad name!', 'password': PASSWORD}, 400),
+            ({'username': 'x' * 41, 'password': PASSWORD}, 400),
+            ({'username': taken, 'password': PASSWORD}, 409),
+            ({'username': 'bahar.owner', 'password': PASSWORD}, 409),
+            ({'username': 'no.password'}, 400),
+        ]
+        for body, expected in cases:
+            with self.subTest(body=body):
+                status, payload, _, _ = aria.request('POST', '/api/admin/aria/users', body, headers=headers)
+                self.assertEqual(status, expected, payload)
+        self.assertEqual(self.login('no.password')[1], 401)
+
+    def test_user_writes_need_csrf_and_a_session(self):
+        aria = self.owner('aria.owner')
+        colleague = self.new_colleague(aria, 'guarded')
+        status, _, _, _ = aria.request('POST', '/api/admin/aria/users',
+                                       {'username': 'csrf.test', 'password': PASSWORD},
+                                       headers={'X-CSRF-Token': 'forged'})
+        self.assertEqual(status, 403)
+        anonymous = Client(self.port)
+        ids = self.users_of(aria, 'aria')
+        for method, path, body in [
+            ('POST', '/api/admin/aria/users', {'username': 'anon.user', 'password': PASSWORD}),
+            ('POST', f'/api/admin/aria/users/{ids[colleague]}/password', {'password': PASSWORD}),
+            ('DELETE', f'/api/admin/aria/users/{ids[colleague]}', None),
+        ]:
+            with self.subTest(method=method, path=path):
+                status, _, _, _ = anonymous.request(method, path, body, headers={'X-CSRF-Token': 'x'})
+                self.assertEqual(status, 401)
+        self.assertEqual(self.login('csrf.test')[1], 401)
+        self.assertEqual(self.login(colleague)[1], 200)
+
+    def test_reset_password_of_a_colleague_ends_their_sessions(self):
+        aria = self.owner('aria.owner')
+        colleague = self.new_colleague(aria, 'reset')
+        colleague_panel = self.owner(colleague)
+        ids = self.users_of(aria, 'aria')
+        status, payload, _, _ = aria.request('POST', f'/api/admin/aria/users/{ids[colleague]}/password',
+                                             {'password': 'reset-pass-456'},
+                                             headers={'X-CSRF-Token': aria.csrf})
+        self.assertEqual(status, 200, payload)
+        self.assertEqual(colleague_panel.request('GET', '/api/admin/aria')[0], 401)
+        self.assertEqual(self.login(colleague)[1], 401)
+        self.assertEqual(self.login(colleague, 'reset-pass-456')[1], 200)
+        self.assertEqual(aria.request('GET', '/api/admin/aria')[0], 200)
+
+    def test_reset_password_rules(self):
+        aria = self.owner('aria.owner')
+        colleague = self.new_colleague(aria, 'rules')
+        ids = self.users_of(aria, 'aria')
+        headers = {'X-CSRF-Token': aria.csrf}
+        status, payload, _, _ = aria.request('POST', f"/api/admin/aria/users/{ids['aria.owner']}/password",
+                                             {'password': 'self-reset-789'}, headers=headers)
+        self.assertEqual(status, 400, 'own password must go through the account panel')
+        status, _, _, _ = aria.request('POST', f'/api/admin/aria/users/{ids[colleague]}/password',
+                                       {'password': 'short'}, headers=headers)
+        self.assertEqual(status, 400)
+        bahar_ids = self.users_of(self.owner('bahar.owner'), 'bahar')
+        status, _, _, _ = aria.request('POST', f"/api/admin/aria/users/{bahar_ids['bahar.owner']}/password",
+                                       {'password': PASSWORD}, headers=headers)
+        self.assertEqual(status, 404, 'a manager must not reach a user of another restaurant')
+        status, _, _, _ = aria.request('POST', '/api/admin/aria/users/999999/password',
+                                       {'password': PASSWORD}, headers=headers)
+        self.assertEqual(status, 404)
+        self.assertEqual(self.login('bahar.owner')[1], 200)
+        self.assertEqual(self.login('aria.owner')[1], 200)
+
+    def test_delete_user_rules_and_effects(self):
+        aria = self.owner('aria.owner')
+        doomed = self.new_colleague(aria, 'doomed')
+        doomed_panel = self.owner(doomed)
+        ids = self.users_of(aria, 'aria')
+        headers = {'X-CSRF-Token': aria.csrf}
+        status, _, _, _ = aria.request('DELETE', f"/api/admin/aria/users/{ids['aria.owner']}", headers=headers)
+        self.assertEqual(status, 400, 'an owner cannot delete their own account here')
+        bahar_ids = self.users_of(self.owner('bahar.owner'), 'bahar')
+        status, _, _, _ = aria.request('DELETE', f"/api/admin/aria/users/{bahar_ids['bahar.owner']}", headers=headers)
+        self.assertEqual(status, 404)
+        status, payload, _, _ = aria.request('DELETE', f'/api/admin/aria/users/{ids[doomed]}', headers=headers)
+        self.assertEqual(status, 200, payload)
+        self.assertNotIn(doomed, {u['username'] for u in payload['users']})
+        self.assertEqual(doomed_panel.request('GET', '/api/admin/aria')[0], 401)
+        self.assertEqual(self.login(doomed)[1], 401)
+        self.assertEqual(aria.request('GET', '/api/admin/aria')[0], 200)
+        self.assertEqual(self.login('bahar.owner')[1], 200)
+
+    def test_passwords_are_stored_hashed(self):
+        import sqlite3
+        aria = self.owner('aria.owner')
+        status, _, _, _ = aria.request('POST', '/api/admin/aria/users',
+                                       {'username': 'hash.check', 'password': 'plain-text-check-1'},
+                                       headers={'X-CSRF-Token': aria.csrf})
+        self.assertEqual(status, 201)
+        conn = sqlite3.connect(self.db)
+        try:
+            (stored,) = conn.execute('SELECT password_hash FROM users WHERE username=?', ('hash.check',)).fetchone()
+        finally:
+            conn.close()
+        self.assertTrue(stored.startswith('pbkdf2_sha256$'))
+        self.assertNotIn('plain-text-check-1', stored)
 
 
 if __name__ == '__main__':

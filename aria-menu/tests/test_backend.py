@@ -118,6 +118,13 @@ class BackendTests(unittest.TestCase):
         self.assertEqual(status, 200)
         return payload
 
+    def disable_date_rules(self, slug, username=None):
+        """Turn off the date rules so the restaurant's default theme is what the public page shows."""
+        owner = self.logged_in(username or f'{slug}.owner')
+        for key in ('spring', 'summer', 'autumn', 'winter', 'nowruz', 'valentine', 'yalda', 'halloween'):
+            status, payload, _ = owner.write('PUT', f'/api/admin/{slug}/schedule/{key}', {'enabled': False})
+            self.assertEqual(status, 200, payload)
+
     def admin_view(self, client, slug):
         status, payload, _, _ = client.request('GET', f'/api/admin/{slug}')
         self.assertEqual(status, 200, payload)
@@ -130,10 +137,10 @@ class BackendTests(unittest.TestCase):
         bahar = self.public_menu('bahar')
         self.assertEqual((len(aria['categories']), len(aria['items'])), (5, 12))
         self.assertEqual((len(bahar['categories']), len(bahar['items'])), (5, 10))
-        self.assertEqual(aria['restaurant']['theme'], 'summer')
-        self.assertEqual(bahar['restaurant']['theme'], 'default')
+        self.assertEqual(self.admin_view(self.logged_in('aria.owner'), 'aria')['restaurant']['defaultTheme'], 'winter')
+        self.assertEqual(self.admin_view(self.logged_in('bahar.owner'), 'bahar')['restaurant']['defaultTheme'], 'default')
         self.assertEqual(set(aria['restaurant']), {'slug', 'name', 'englishName', 'mark', 'headline', 'note',
-                                                    'description', 'footer', 'theme'})
+                                                    'description', 'footer', 'welcomeMessage', 'theme'})
         self.assertEqual(set(aria['items'][0]), {'id', 'name', 'category', 'description', 'ingredients',
                                                   'allergens', 'price', 'icon', 'label'})
 
@@ -245,6 +252,7 @@ class BackendTests(unittest.TestCase):
         status, _, _ = aria.write('POST', '/api/admin/cafe-nila/categories', {'name': 'x', 'icon': 'bowl'})
         self.assertEqual(status, 403)
         self.assertEqual(self.public_menu('bahar')['restaurant']['name'], 'رستوران بهار')
+        self.disable_date_rules('bahar')
         self.assertEqual(self.public_menu('bahar')['restaurant']['theme'], 'default')
 
     def test_csrf_token_is_required_for_writes(self):
@@ -276,7 +284,9 @@ class BackendTests(unittest.TestCase):
         status, _, _ = owner.write('PUT', '/api/admin/aria/theme', {'theme': 'winter'})
         self.assertEqual(status, 200)
         self.assertEqual(self.public_menu('aria')['restaurant']['theme'], 'winter')
+        self.disable_date_rules('bahar')
         self.assertEqual(self.public_menu('bahar')['restaurant']['theme'], 'default')
+        self.disable_date_rules('cafe-nila', 'nila.owner')
         self.assertEqual(self.public_menu('cafe-nila')['restaurant']['theme'], 'autumn')
         status, _, _ = owner.write('PUT', '/api/admin/aria/theme', {'theme': 'summer'})
         self.assertEqual(status, 200)

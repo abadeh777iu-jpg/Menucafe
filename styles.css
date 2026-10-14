@@ -8,3 +8,4 @@
 
 /* Demo-only links; shared menu styling above remains unchanged. */
 .demo-links{display:flex;justify-content:center;align-items:center;flex-wrap:wrap;gap:8px;margin-top:20px;font-size:11px}.demo-links a{display:inline-flex;gap:6px;align-items:center;min-height:44px;padding:8px 14px;color:var(--green);border:1px solid var(--line);border-radius:9px;text-decoration:none}.demo-links a[aria-current="page"]{background:#eeefe7}.demo-links a:hover{background:#e7eade}
+
