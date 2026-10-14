@@ -550,6 +550,17 @@ describe('seller panel', () => {
     assert.equal((await seller.write('POST', `/api/super/licenses/${licenseId}/revoke`)).status, 404);
   });
 
+  test('first-time seller setup is closed once a seller exists', async () => {
+    const client = new Client('menu_super');
+    const status = await client.request('GET', '/api/super/setup-status');
+    assert.equal(status.body.needsSetup, false);
+    const wrongCode = await client.request('POST', '/api/super/setup', { setupCode: 'not-the-code-123', username: 'second.seller', password: 'another-pass-456' });
+    assert.equal(wrongCode.status, 401);
+    const closed = await client.request('POST', '/api/super/setup', { setupCode: process.env.SETUP_CODE, username: 'second.seller', password: 'another-pass-456' });
+    assert.equal(closed.status, 403);
+    assert.equal(closed.body.error, 'حساب فروشنده قبلاً ساخته شده است.');
+  });
+
   test('seller sign-out ends the seller session', async () => {
     const seller = await sellerClient();
     assert.equal((await seller.write('POST', '/api/super/logout')).status, 200);

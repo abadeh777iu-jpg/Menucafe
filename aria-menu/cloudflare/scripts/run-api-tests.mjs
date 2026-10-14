@@ -9,6 +9,7 @@ import net from 'node:net';
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const PASSWORD = 'owner-pass-123';
+const SETUP_CODE = 'setup-code-test-123'; // local test value only
 const persist = mkdtempSync(join(tmpdir(), 'menucafe-d1-'));
 const port = await new Promise((resolve) => {
   const server = net.createServer().listen(0, '127.0.0.1', () => {
@@ -58,12 +59,12 @@ try {
   writeFileSync(superFile, superSql, 'utf8');
   run('npx', ['wrangler', 'd1', 'execute', 'menucafe', '--local', '--persist-to', persist, '--file', superFile]);
   worker = spawn('npx', ['wrangler', 'dev', '--local', '--ip', '127.0.0.1', '--port', String(port),
-    '--persist-to', persist], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' });
+    '--persist-to', persist, '--var', `SUPER_SETUP_CODE:${SETUP_CODE}`], { cwd: root, stdio: ['ignore', 'pipe', 'pipe'], shell: process.platform === 'win32' });
   worker.stdout.on('data', () => {});
   worker.stderr.on('data', () => {});
   await waitForWorker();
   const tests = spawnSync(process.execPath, ['--test', 'test/api.test.mjs'], {
-    cwd: root, stdio: 'inherit', env: { ...process.env, BASE_URL: baseUrl, OWNER_PASSWORD: PASSWORD },
+    cwd: root, stdio: 'inherit', env: { ...process.env, BASE_URL: baseUrl, OWNER_PASSWORD: PASSWORD, SETUP_CODE },
   });
   exitCode = tests.status ?? 1;
 } catch (error) {

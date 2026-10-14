@@ -625,6 +625,19 @@ export async function createRestaurant(db, payload) {
 
 // ----- super-admin accounts and sessions ---------------------------------------------
 
+export async function superAdminCount(db) {
+  const row = await one(db, 'SELECT COUNT(*) AS n FROM super_admins');
+  return Number(row ? row.n : 0);
+}
+
+// Inserts the seller account only if no seller exists yet. The check and the insert are one statement.
+export async function createFirstSuperAdmin(db, username, passwordHash, createdAt) {
+  const result = await db.prepare(
+    'INSERT INTO super_admins (username, password_hash, created_at) SELECT ?, ?, ? WHERE NOT EXISTS (SELECT 1 FROM super_admins)'
+  ).bind(username, passwordHash, createdAt).run();
+  return Boolean(result && result.meta && result.meta.changes > 0);
+}
+
 export async function superAdminByUsername(db, username) {
   return one(db, 'SELECT * FROM super_admins WHERE username=?', username);
 }

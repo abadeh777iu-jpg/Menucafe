@@ -496,6 +496,47 @@ async function superLogin(env, request) {
     { 'Set-Cookie': superCookie(token, security.SESSION_TTL_SECONDS) });
 }
 
+// First-time seller account, created from the browser. It works only when the owner has set the
+// SUPER_SETUP_CODE secret (at least 12 characters, chosen by the owner) and no seller account exists yet.
+const SETUP_CODE_MIN_LENGTH = 12;
+
+function setupEnabled(env) {
+  return typeof env.SUPER_SETUP_CODE === 'string' && env.SUPER_SETUP_CODE.length >= SETUP_CODE_MIN_LENGTH;
+}
+
+async function superSetup(env, request) {
+  if (!setupEnabled(env)) throw new ApiError('این بخش فعال نیست.', 404);
+  const data = await readBody(request);
+  const stamp = Math.floor(Date.now() / 1000);
+  const key = `${clientKey(request)}|super-setup`;
+  const window = security.LOGIN_FAILURE_WINDOW_SECONDS;
+  if (await store.throttleBlocked(env.DB, key, security.LOGIN_FAILURE_LIMIT, window, stamp)) {
+    throw new ApiError('تعداد تلاش‌ها زیاد است؛ چند دقیقه بعد دوباره امتحان کنید.', 429);
+  }
+  const code = data.setupCode ? String(data.setupCode) : '';
+  if (!security.sameText(code, env.SUPER_SETUP_CODE)) {
+    await store.throttleRecord(env.DB, key, window, stamp);
+    throw new ApiError('کد راه‌اندازی اشتباه است.', 401);
+  }
+  const username = store.cleanUsername(data.username);
+  const password = data.password ? String(data.password) : '';
+  const length = security.codePointLength(password);
+  if (length < security.PASSWORD_MIN_LENGTH || length > security.PASSWORD_MAX_LENGTH) {
+    throw new ApiError(`رمز عبور باید بین ${security.PASSWORD_MIN_LENGTH} تا ${security.PASSWORD_MAX_LENGTH} نویسه باشد.`, 400);
+  }
+  const hash = await security.hashPassword(password, security.passwordIterations(env));
+  const created = await store.createFirstSuperAdmin(env.DB, username, hash, stamp);
+  if (!created) throw new ApiError('حساب فروشنده قبلاً ساخته شده است.', 403);
+  await store.throttleReset(env.DB, key);
+  const admin = await store.superAdminByUsername(env.DB, username);
+  const token = security.newToken();
+  const csrf = security.newToken();
+  await store.createSuperSession(env.DB, await security.tokenDigest(token), admin.id, csrf,
+    stamp + security.SESSION_TTL_SECONDS);
+  return json(201, { admin: { username }, csrfToken: csrf },
+    { 'Set-Cookie': superCookie(token, security.SESSION_TTL_SECONDS) });
+}
+
 async function issueLicense(env, slug, label) {
   const key = security.newLicenseKey();
   const hint = key.slice(-4);
@@ -509,6 +550,10 @@ async function superApi(env, request, method, rest) {
   const numericId = (value) => (/^[0-9]+$/.test(value || '') ? Number(value) : null);
 
   if (head === 'login' && tail.length === 0 && method === 'POST') return superLogin(env, request);
+  if (head === 'setup-status' && tail.length === 0 && method === 'GET') {
+    return json(200, { needsSetup: setupEnabled(env) && (await store.superAdminCount(db)) === 0 });
+  }
+  if (head === 'setup' && tail.length === 0 && method === 'POST') return superSetup(env, request);
   if (head === 'me' && tail.length === 0 && method === 'GET') {
     const session = await requireSuper(env, request);
     return json(200, { admin: { username: session.username }, csrfToken: session.csrf_token });

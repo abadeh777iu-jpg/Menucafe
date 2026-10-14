@@ -61,6 +61,7 @@
   }
 
   function showOnly(name) {
+    $('#super-setup').hidden = name !== 'setup';
     $('#super-login').hidden = name !== 'login';
     $('#super-dashboard').hidden = name !== 'dashboard';
     $('#super-logout').hidden = name === 'login';
@@ -151,6 +152,34 @@
     }
   }
 
+  async function setup(event) {
+    event.preventDefault();
+    const form = event.currentTarget;
+    const button = $('button[type=submit]', form);
+    if (form.elements.password.value !== form.elements.password2.value) {
+      report(form, 'دو رمز عبور یکسان نیستند.', 'error');
+      return;
+    }
+    button.disabled = true;
+    try {
+      const session = await api('POST', 'setup', {
+        setupCode: form.elements.setupCode.value,
+        username: form.elements.username.value,
+        password: form.elements.password.value,
+      });
+      form.reset();
+      csrf = session.csrfToken;
+      $('#super-user').textContent = session.admin.username;
+      showOnly('dashboard');
+      await loadRestaurants();
+      say(`حساب ساخته شد و وارد شدید: ${session.admin.username}`);
+    } catch (error) {
+      report(form, error.message, 'error');
+    } finally {
+      button.disabled = false;
+    }
+  }
+
   async function logout() {
     try { await api('POST', 'logout'); } catch { /* session may already be gone */ }
     csrf = '';
@@ -215,6 +244,13 @@
     const select = $('#theme-select');
     select.replaceChildren(...THEMES.map(([id, name]) => el('option', { value: id, text: name })));
     try {
+      const status = await api('GET', 'setup-status');
+      if (status.needsSetup) {
+        showOnly('setup');
+        return;
+      }
+    } catch { /* older server or offline: continue to the normal sign-in check */ }
+    try {
       const me = await api('GET', 'me');
       csrf = me.csrfToken;
       $('#super-user').textContent = me.admin.username;
@@ -227,6 +263,7 @@
   }
 
   $('#super-login-form').addEventListener('submit', login);
+  $('#super-setup-form').addEventListener('submit', setup);
   $('#super-logout').addEventListener('click', logout);
   $('#restaurant-form').addEventListener('submit', addRestaurant);
   $('#license-form').addEventListener('submit', issueLicense);
